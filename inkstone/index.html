@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Inkstone Mandarin</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;900&family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400;1,600&display=swap">
+<style>
+/* Layout: one app column; sticky header, five sections, bottom tab bar on phones, a sheet that slides up for every tapped character */
+:root{
+  --bg:#EAF0EC; --surface:#F7FAF8; --sunk:#DDE6E1; --ink:#14201B; --muted:#56665F; --line:#C5D2CB;
+  --accent:#1D6A5A; --accent-ink:#F4FBF8; --seal:#B3332B; --good:#2E7D4F; --bad:#B3332B;
+  --t1:#C8372D; --t2:#C9820A; --t3:#2C8752; --t4:#2F5FC4; --t5:#7C8682;
+  --hz:"Noto Serif SC","Songti SC","SimSun",serif;
+  --body:"Source Sans 3","Segoe UI",system-ui,sans-serif;
+  --py:"Source Serif 4","Georgia",serif;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1513; --surface:#16201C; --sunk:#1E2A26; --ink:#E4ECE7; --muted:#93A39C; --line:#2B3833;
+  --accent:#5DC0A6; --accent-ink:#082019; --seal:#E26B5F; --good:#5DC48A; --bad:#F0756A;
+  --t1:#F0675C; --t2:#F0B23E; --t3:#5DC48A; --t4:#7FA0F2; --t5:#8D9994; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1513; --surface:#16201C; --sunk:#1E2A26; --ink:#E4ECE7; --muted:#93A39C; --line:#2B3833;
+  --accent:#5DC0A6; --accent-ink:#082019; --seal:#E26B5F; --good:#5DC48A; --bad:#F0756A;
+  --t1:#F0675C; --t2:#F0B23E; --t3:#5DC48A; --t4:#7FA0F2; --t5:#8D9994; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.55;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--accent)}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+h1,h2,h3{font-family:"Source Serif 4",var(--hz);font-weight:600;line-height:1.2;text-wrap:balance;margin:0}
+h2{font-size:1.6rem} h3{font-size:1.15rem}
+p{margin:0}
+.py{font-family:var(--py);font-style:italic}
+.label{font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+.t1{--tc:var(--t1)}.t2{--tc:var(--t2)}.t3{--tc:var(--t3)}.t4{--tc:var(--t4)}.t5{--tc:var(--t5)}
+
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+.top-in{max-width:980px;margin:0 auto;display:flex;align-items:center;gap:16px;padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+.seal{width:34px;height:34px;border-radius:7px;background:var(--seal);color:#FFF6F2;display:grid;place-items:center;font-family:var(--hz);font-weight:900;font-size:21px}
+.brand b{font-family:var(--hz);font-weight:600;font-size:1.1rem}
+nav.tabs{display:flex;gap:4px;margin-left:auto}
+nav.tabs a{display:flex;align-items:center;gap:6px;padding:7px 12px;border-radius:999px;text-decoration:none;color:var(--muted);font-weight:600;font-size:.95rem}
+nav.tabs a span{font-family:var(--hz);font-size:1.1rem}
+nav.tabs a[aria-current="page"]{background:var(--accent);color:var(--accent-ink)}
+.icon-btn{background:transparent;border:1px solid var(--line);border-radius:999px;width:38px;height:38px;display:grid;place-items:center;flex:none}
+
+main{max-width:980px;margin:0 auto;padding-block:20px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+section.view{display:flex;flex-direction:column;gap:28px}
+.block{display:flex;flex-direction:column;gap:14px}
+.block-head{display:flex;flex-direction:column;gap:4px}
+
+@media (max-width:759px){
+  nav.tabs{position:fixed;left:0;right:0;bottom:0;margin:0;justify-content:space-around;background:var(--surface);border-top:1px solid var(--line);
+    padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));z-index:25}
+  nav.tabs a{flex-direction:column;gap:0;font-size:.72rem;padding:5px 10px;border-radius:12px}
+  nav.tabs a span{font-size:1.35rem;line-height:1.2}
+  .top-in .spacer{margin-left:auto}
+}
+
+/* tappable hanzi everywhere */
+.hz{font-family:var(--hz);background:none;border:0;padding:0 1px;margin:0;line-height:inherit;font-size:inherit;color:inherit;
+  border-bottom:3px solid var(--tc,var(--t5));border-radius:2px;transition:background .15s}
+.hz:hover{background:var(--sunk)}
+.hz:active{transform:translateY(1px)}
+.plain .hz{border-bottom-color:transparent}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;border:1px solid var(--line);background:var(--surface);padding:9px 16px;font-weight:600;font-size:.95rem}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.small{padding:5px 11px;font-size:.85rem}
+.say{display:inline-grid;place-items:center;width:36px;height:36px;border-radius:999px;border:1px solid var(--line);background:var(--surface);flex:none}
+.say svg,.icon-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 13px;font-size:.9rem;font-weight:600;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+
+/* hero */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:26px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:24px}
+.hero-char{width:180px;aspect-ratio:1;max-width:100%;position:relative;border:0;background:var(--bg);border-radius:16px;font-family:var(--hz);font-weight:900;font-size:130px;line-height:1;display:grid;place-items:center;color:var(--ink)}
+.grid-bg{background-image:
+  linear-gradient(var(--line),var(--line)),linear-gradient(var(--line),var(--line));
+  background-size:100% 1px,1px 100%;background-position:center;background-repeat:no-repeat}
+.hero-copy{display:flex;flex-direction:column;gap:10px;min-width:0}
+.hero-copy h1{font-size:clamp(1.6rem,4vw,2.3rem)}
+.hero-pin{font-size:1.4rem;color:var(--tc)}
+@media (max-width:560px){.hero{grid-template-columns:1fr;justify-items:center;text-align:center}.hero-copy{align-items:center}}
+
+.ideas{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.idea{display:flex;flex-direction:column;gap:8px;padding:18px;border-top:3px solid var(--accent);background:var(--surface);border-radius:0 0 var(--r) var(--r)}
+.idea .big{font-family:var(--hz);font-size:2rem;line-height:1.2}
+@media (max-width:760px){.ideas{grid-template-columns:1fr}}
+
+.path{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;counter-reset:step}
+.path li a{display:grid;grid-template-columns:44px 1fr auto;gap:14px;align-items:center;text-decoration:none;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+.path li a::before{counter-increment:step;content:counter(step);width:36px;height:36px;border-radius:999px;border:2px solid var(--accent);display:grid;place-items:center;font-weight:700;color:var(--accent)}
+.path li a .arrow{color:var(--muted)}
+.stat-row{display:flex;flex-wrap:wrap;gap:10px 24px;align-items:baseline}
+.stat-row b{font-size:1.6rem;font-variant-numeric:tabular-nums}
+.bar{height:8px;background:var(--sunk);border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:999px}
+
+/* character grid */
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.search{flex:1 1 220px;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font:inherit;color:var(--ink)}
+.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.tile{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:12px 6px 10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);text-align:center}
+.tile .c{font-family:var(--hz);font-size:2.6rem;line-height:1.15;border-bottom:3px solid var(--tc);padding:0 4px}
+.tile .p{font-family:var(--py);font-style:italic;color:var(--tc);font-size:1rem;margin-top:4px}
+.tile .m{font-size:.8rem;color:var(--muted);line-height:1.25}
+.tile.known::after{content:"";position:absolute;top:8px;right:8px;width:8px;height:8px;border-radius:999px;background:var(--good)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.85rem;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:14px;height:3px;background:var(--tc);margin-right:6px;vertical-align:middle}
+
+/* phrases */
+.cat-list{display:flex;flex-direction:column;gap:10px}
+.phrase{display:grid;grid-template-columns:1fr auto;gap:4px 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.phrase .z{font-size:1.6rem;line-height:1.5;grid-column:1}
+.phrase .say{grid-column:2;grid-row:1}
+.phrase .p{color:var(--accent);font-size:1.05rem;grid-column:1/-1}
+.phrase .e{font-weight:600;grid-column:1/-1}
+.phrase .lit,.phrase .note{font-size:.93rem;color:var(--muted);grid-column:1/-1}
+.phrase .lit b{color:var(--ink);font-weight:600}
+.phrase > *{min-width:0}
+
+/* tones */
+.tones{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:700px){.tones{grid-template-columns:repeat(2,1fr)}}
+.tone{display:flex;flex-direction:column;gap:6px;align-items:flex-start;text-align:left;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--tc);border-radius:0 0 var(--r) var(--r);padding:14px}
+.tone svg{width:100%;height:56px}
+.tone .c{font-family:var(--hz);font-size:2rem;line-height:1.1}
+.tone .p{font-size:1.3rem;color:var(--tc)}
+.tone small{color:var(--muted);font-size:.85rem;line-height:1.3}
+.rules{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px}
+
+/* conversation */
+.scen{display:flex;flex-wrap:wrap;gap:8px}
+.chat{display:flex;flex-direction:column;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;min-height:120px}
+.msg{max-width:min(88%,560px);display:flex;flex-direction:column;gap:2px;padding:10px 14px;border-radius:16px;background:var(--bg)}
+.msg.me{align-self:flex-end;background:var(--accent);color:var(--accent-ink)}
+.msg.me .hz{border-bottom-color:color-mix(in srgb,var(--accent-ink) 55%,transparent)}
+.msg .who{font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.75}
+.msg .z{font-size:1.35rem;line-height:1.5}
+.msg .row{display:flex;gap:8px;align-items:center}
+.msg .say{width:30px;height:30px;background:transparent;border-color:currentColor;color:inherit}
+.fb{font-size:.92rem;padding:8px 12px;border-radius:10px;border-left:3px solid var(--good);background:var(--bg)}
+.fb.bad{border-left-color:var(--bad)}
+.ask{font-weight:600;color:var(--muted);font-size:.95rem}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:left;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:1px}
+.opt .z{font-family:var(--hz);font-size:1.2rem}
+.opt:hover{border-color:var(--accent)}
+.name-field{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.95rem}
+.name-field input{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font:inherit;color:var(--ink);width:150px}
+
+/* asia */
+.countries{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.country{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.country .z{font-size:2rem;line-height:1.3}
+.country .lit{font-weight:600}
+.country p{font-size:.95rem}
+.country .link{font-size:.9rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+.idioms{display:flex;flex-direction:column;gap:12px}
+.idiom{display:grid;grid-template-columns:auto 1fr;gap:6px 18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.idiom .z{font-size:1.8rem;line-height:1.3;writing-mode:vertical-rl;grid-row:span 4;letter-spacing:.1em}
+.idiom > *{min-width:0}
+.idiom .lit{color:var(--muted);font-size:.95rem}
+.idiom .mean{font-weight:600}
+.idiom p{font-size:.95rem}
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.fact{display:flex;flex-direction:column;gap:6px;padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+.fact .z{font-size:1.7rem;line-height:1.3}
+.fact p{font-size:.95rem}
+
+/* practice */
+.modes{display:flex;flex-wrap:wrap;gap:8px}
+.card-stage{display:flex;flex-direction:column;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:24px 16px}
+.flash{width:230px;max-width:100%;aspect-ratio:1;border-radius:18px;border:1px solid var(--line);background:var(--bg);display:grid;place-items:center;font-family:var(--hz);font-size:140px;line-height:1;font-weight:600}
+.reveal{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;min-height:84px}
+.reveal .p{font-size:1.6rem;color:var(--tc)}
+.row-btns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.qopts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%;max-width:520px}
+.qopt{background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;font-weight:600;min-height:52px}
+.qopt.right{border-color:var(--good);background:color-mix(in srgb,var(--good) 18%,var(--bg))}
+.qopt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,var(--bg))}
+.qopt[data-tone]{border-top:4px solid var(--tc)}
+.score{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:600}
+
+/* sheet */
+.sheet-wrap{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.scrim{position:absolute;inset:0;background:color-mix(in srgb,var(--ink) 45%,transparent)}
+.sheet{position:relative;width:min(720px,100%);max-height:92%;overflow-y:auto;background:var(--surface);border-radius:22px 22px 0 0;
+  padding:18px max(18px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px));
+  display:flex;flex-direction:column;gap:18px;animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.sheet{animation:none}}
+@media (min-width:760px){.sheet-wrap{align-items:center}.sheet{border-radius:22px;max-height:88%}}
+.sheet-bar{display:flex;align-items:center;gap:8px}
+.sheet-bar .grow{flex:1}
+.s-head{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:center}
+.s-char{width:150px;aspect-ratio:1;max-width:38vw;border-radius:16px;background:var(--bg);display:grid;place-items:center;font-family:var(--hz);font-weight:900;font-size:min(110px,28vw);line-height:1;border-bottom:5px solid var(--tc)}
+.s-meta{display:flex;flex-direction:column;gap:6px;min-width:0}
+.s-meta .p{font-size:1.8rem;color:var(--tc);line-height:1.1}
+.s-meta .m{font-size:1.2rem;font-weight:600}
+.kv{display:flex;flex-wrap:wrap;gap:8px}
+.kv span{background:var(--bg);border-radius:8px;padding:4px 10px;font-size:.88rem}
+.kv span b{font-family:var(--hz)}
+.s-sec{display:flex;flex-direction:column;gap:6px}
+.s-sec p{max-width:65ch}
+.words{display:flex;flex-direction:column;gap:8px}
+.word{display:grid;grid-template-columns:1fr auto;gap:2px 12px;align-items:center;background:var(--bg);border-radius:12px;padding:10px 12px}
+.word .z{font-size:1.4rem;line-height:1.4}
+.word .say{grid-row:span 2;grid-column:2}
+.trace{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.trace canvas{width:220px;height:220px;max-width:100%;border-radius:12px;background:var(--bg);touch-action:none;border:1px solid var(--line)}
+.trace .side{display:flex;flex-direction:column;gap:8px;flex:1 1 180px;min-width:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));z-index:60;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:.92rem;max-width:calc(100% - 32px)}
+</style>
+</head>
+<body>
+
+
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="#learn" aria-label="Inkstone home"><span class="seal">墨</span><b>Inkstone</b></a>
+    <nav class="tabs" aria-label="Sections">
+      <a href="#learn" data-v="learn"><span>学</span>Learn</a>
+      <a href="#chars" data-v="chars"><span>字</span>Characters</a>
+      <a href="#speak" data-v="speak"><span>说</span>Speak</a>
+      <a href="#asia" data-v="asia"><span>亚</span>Asia</a>
+      <a href="#practice" data-v="practice"><span>练</span>Practice</a>
+    </nav>
+    <span class="spacer"></span>
+    <button class="icon-btn" id="speedBtn" title="Audio speed" aria-label="Audio speed: slow"><svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6"/></svg></button>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<div class="sheet-wrap" id="sheet" hidden>
+  <div class="scrim" data-close></div>
+  <section class="sheet" role="dialog" aria-modal="true" aria-label="Character details" id="sheetBody"></section>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ============ DATA ============ */
+const GROUPS=['Nature','People & body','Home & life','Ideas & feelings','Places & numbers'];
+const C=[
+// Nature
+{c:'日',p:'rì',m:'sun, day',g:0,r:'日',s:4,k:'Pictograph',o:'The oldest forms, scratched on oracle bones around 1200 BCE, show a circle with a dot in the middle: the sun. Brushes and bronze-casting moulds made squares easier than circles, so the sun became a box with a line inside.',f:'Japan is 日本 Rìběn, “the sun’s origin”, because seen from China the sun rises over Japan. That is where the English phrase “Land of the Rising Sun” comes from.',w:[['生日','shēngrì','birthday (birth-day)'],['日本','Rìběn','Japan (sun-origin)']]},
+{c:'月',p:'yuè',m:'moon, month',g:0,r:'月',s:4,k:'Pictograph',o:'A crescent moon. Ancient scribes always drew it as a crescent, never full, so it could not be confused with the sun.',f:'Months have no names in Chinese, only numbers: 一月 is January (“month one”), 二月 is February. On the left of body-part characters like 脸 (face) 月 is actually a squashed form of 肉, flesh. The two shapes merged over time.',w:[['一月','yī yuè','January (one-month)'],['月亮','yuèliang','the moon']]},
+{c:'山',p:'shān',m:'mountain',g:0,r:'山',s:3,k:'Pictograph',o:'Three peaks rising from the ground, the middle one tallest. It is one of the few characters that still looks almost exactly like its 3,000-year-old ancestor.',f:'Chinese landscape painting is called 山水 shānshuǐ, “mountain-water”. To the Chinese eye a landscape is the meeting of something still and something flowing.',w:[['火山','huǒshān','volcano (fire-mountain)'],['山水','shānshuǐ','landscape (mountain-water)']]},
+{c:'水',p:'shuǐ',m:'water',g:0,r:'水',s:4,k:'Pictograph',o:'A stream in the middle with ripples or splashes on each side.',f:'On the left side of a character, water shrinks to three drops: 氵. You can spot it in 河 river, 海 sea, 洗 wash and even 酒 alcohol. If you see 氵, the word is probably wet.',w:[['水果','shuǐguǒ','fruit (water-fruit)'],['喝水','hē shuǐ','drink water']]},
+{c:'火',p:'huǒ',m:'fire',g:0,r:'火',s:4,k:'Pictograph',o:'Flames leaping upward from a central fire, with sparks on both sides.',f:'At the bottom of a character fire becomes four dots: 灬, as in 热 rè (hot). The word for train is 火车 huǒchē, “fire vehicle”, a name from the age of steam engines that never changed.',w:[['火车','huǒchē','train (fire-vehicle)'],['火山','huǒshān','volcano']]},
+{c:'木',p:'mù',m:'tree, wood',g:0,r:'木',s:4,k:'Pictograph',o:'A tree: a vertical trunk, a horizontal line for branches, and two slanting strokes for the roots spreading into the soil.',f:'Characters build like Lego. One tree 木, two trees 林 is a grove, three trees 森 is a dense forest.',w:[['木头','mùtou','wood, timber'],['树木','shùmù','trees']]},
+{c:'林',p:'lín',m:'woods, grove',g:0,r:'木',s:8,k:'Compound idea',o:'Two trees side by side. When two meanings are combined to make a third, it is called a “compound idea” (会意 huìyì).',f:'林 Lín is one of the most common Chinese surnames, shared by millions of people.',w:[['森林','sēnlín','forest'],['树林','shùlín','woods']]},
+{c:'森',p:'sēn',m:'forest, dense',g:0,r:'木',s:12,k:'Compound idea',o:'Three trees stacked together. In Chinese, three of something often simply means “many”.',f:'The same pattern shows up elsewhere: 品 (three mouths) means goods or quality, 晶 (three suns) means sparkling crystal.',w:[['森林','sēnlín','forest'],['阴森','yīnsēn','gloomy, eerie']]},
+{c:'雨',p:'yǔ',m:'rain',g:0,r:'雨',s:8,k:'Pictograph',o:'The line on top is the sky, the frame below is the clouds, and the four dots are drops falling.',f:'On top of a character, 雨 means weather: 雪 snow, 雷 thunder, 雾 fog. Chinese doesn’t say “it rains”, it says 下雨, “rain comes down”.',w:[['下雨','xià yǔ','to rain (down-rain)'],['雨伞','yǔsǎn','umbrella']]},
+{c:'田',p:'tián',m:'field, farmland',g:0,r:'田',s:5,k:'Pictograph',o:'A rice paddy seen from above, split into plots by raised paths and irrigation ditches.',f:'田 is inside 男 (man), because the field was where a man’s strength was spent. It is also the Japanese surname element “-ta”, as in Tanaka 田中, “in the middle of the field”.',w:[['田地','tiándì','farmland'],['种田','zhòng tián','to farm']]},
+{c:'天',p:'tiān',m:'sky, heaven, day',g:0,r:'大',s:4,k:'Compound idea',o:'A big person 大 with a line above the head. Early forms gave the person a huge round head. What is above our heads is the sky.',f:'The emperor was 天子, “Son of Heaven”, ruling by the Mandate of Heaven. Beijing’s Temple of Heaven 天坛 is where he prayed for good harvests.',w:[['今天','jīntiān','today (now-day)'],['天气','tiānqì','weather (sky-air)']]},
+{c:'电',p:'diàn',m:'electricity, lightning',g:0,r:'田',s:5,k:'Pictograph',tr:'電',o:'The traditional form 電 is rain 雨 above a zigzag lightning bolt. The 1950s simplification kept only the bolt.',f:'Modern Chinese builds technology words out of 电: 电话 “electric speech” is a phone, 电脑 “electric brain” is a computer, 电影 “electric shadow” is a film.',w:[['电脑','diànnǎo','computer (electric brain)'],['电影','diànyǐng','movie (electric shadow)']]},
+{c:'龙',p:'lóng',m:'dragon',g:0,r:'龙',s:5,k:'Pictograph',tr:'龍',o:'The traditional 龍 (16 strokes) shows a dragon with an open mouth, a crest on its head and a long scaly body coiling down the right side.',f:'Chinese dragons are not fire-breathing villains. They live in rivers and seas, bring rain and stand for power and luck. A child born in the Year of the Dragon is considered fortunate.',w:[['龙年','lóng nián','Year of the Dragon'],['恐龙','kǒnglóng','dinosaur (terror-dragon)']]},
+// People & body
+{c:'人',p:'rén',m:'person, people',g:1,r:'人',s:2,k:'Pictograph',o:'Oracle bones show a person in profile, walking, body leaning forward with two legs. Three thousand years of writing reduced it to two strokes.',f:'A popular saying: the two strokes of 人 lean on each other, because nobody stands alone. On the left side of a character it becomes 亻, as in 你, 他 and 休.',w:[['中国人','Zhōngguó rén','Chinese person'],['人口','rénkǒu','population (people-mouths)']]},
+{c:'口',p:'kǒu',m:'mouth, opening',g:1,r:'口',s:3,k:'Pictograph',o:'An open mouth. It also means any opening, such as a door or a river mouth.',f:'Families are counted in mouths to feed: 我家有四口人, “my family has four mouths of people”. On the side of a character, 口 often marks a spoken word or sound, as in 吃, 喝 and 吗.',w:[['出口','chūkǒu','exit (out-mouth)'],['人口','rénkǒu','population']]},
+{c:'女',p:'nǚ',m:'woman, female',g:1,r:'女',s:3,k:'Pictograph',o:'Oracle-bone forms show a kneeling figure with arms crossed in front of the body.',f:'女 sits inside many family words: 妈 mother, 姐 older sister, 妹 younger sister, and also in 好, good.',w:[['女儿','nǚ’ér','daughter'],['女人','nǚrén','woman']]},
+{c:'子',p:'zǐ',m:'child, son',g:1,r:'子',s:3,k:'Pictograph',o:'A baby: a big head, arms reaching out, and legs wrapped together in swaddling cloth.',f:'子 was also a title of respect, “master”: 孔子 Kǒngzǐ is Master Kong (Confucius), 老子 Lǎozǐ is the Old Master. As a light suffix (zi) it ends many everyday nouns: 桌子 table, 杯子 cup.',w:[['孩子','háizi','child'],['儿子','érzi','son']]},
+{c:'男',p:'nán',m:'man, male',g:1,r:'田',s:7,k:'Compound idea',o:'A field 田 above 力, a drawing of a plough. The one who puts strength into the field: a picture of ancient farm life.',f:'Toilets in China are often labelled just 男 and 女. Learn these two and you will always find the right door.',w:[['男人','nánrén','man'],['男朋友','nánpéngyou','boyfriend']]},
+{c:'目',p:'mù',m:'eye',g:1,r:'目',s:5,k:'Pictograph',o:'An eye with its pupil, originally drawn lying down. It was turned upright to fit the vertical columns of Chinese writing.',f:'Many animal and body pictographs were rotated 90° for the same reason. 马 (horse) once stood on its tail on the page.',w:[['目标','mùbiāo','goal, target'],['题目','tímù','topic, exam question']]},
+{c:'耳',p:'ěr',m:'ear',g:1,r:'耳',s:6,k:'Pictograph',o:'An ear with its curved outer rim and the inner fold.',f:'The traditional character for listen, 聽, contains an ear 耳, an eye 目 and a heart 心. Listening was seen as using your ears, eyes and heart together.',w:[['耳朵','ěrduo','ear'],['耳机','ěrjī','headphones (ear-machine)']]},
+{c:'手',p:'shǒu',m:'hand',g:1,r:'手',s:4,k:'Pictograph',o:'A hand with fingers spread, the long vertical stroke being the arm.',f:'On the left side it becomes 扌, a sign that the word is an action done with the hands: 打 hit, 找 look for, 拿 hold. A mobile phone is 手机, “hand machine”.',w:[['手机','shǒujī','mobile phone (hand-machine)'],['手表','shǒubiǎo','wristwatch']]},
+{c:'心',p:'xīn',m:'heart, mind',g:1,r:'心',s:4,k:'Pictograph',o:'An early drawing of the heart with its chambers.',f:'Ancient Chinese thinkers believed you think with your heart, so 心 means both heart and mind. It hides inside 想 (to think), 念 (to miss someone) and 您, the polite “you”.',w:[['小心','xiǎoxīn','be careful (small-heart)'],['开心','kāixīn','happy (open-heart)']]},
+{c:'力',p:'lì',m:'strength, power',g:1,r:'力',s:2,k:'Pictograph',o:'Scholars read the oldest form as a wooden plough, the tool that turned human strength into farmland.',f:'Chinese sometimes borrows characters purely for sound: chocolate is 巧克力 qiǎokèlì. The 力 at the end is there for its sound, not for strength.',w:[['力气','lìqi','physical strength'],['努力','nǔlì','to work hard']]},
+{c:'大',p:'dà',m:'big, large',g:1,r:'大',s:3,k:'Pictograph',o:'A person standing with arms and legs stretched wide, as if showing how big something is.',f:'大家 dàjiā, “big family”, is how you say “everyone”. The whole room is treated as one family.',w:[['大学','dàxué','university (big-learning)'],['大家','dàjiā','everyone (big-family)']]},
+{c:'我',p:'wǒ',m:'I, me',g:1,r:'戈',s:7,k:'Borrowed sound',o:'The oracle-bone form is a weapon: a long-handled halberd with a jagged blade. Because the weapon’s name sounded like the word for “I”, scribes borrowed it. Linguists call this the rebus principle (假借 jiǎjiè).',f:'Add 们 and any pronoun becomes plural: 我们 we, 你们 you all, 他们 they. That is about all the grammar Chinese pronouns need.',w:[['我们','wǒmen','we, us'],['我的','wǒ de','my, mine']]},
+{c:'你',p:'nǐ',m:'you',g:1,r:'亻',s:7,k:'Sound + meaning',o:'A person 亻 next to 尔 ěr, an old word for “you” that also gives the sound.',f:'For elders, teachers and customers use 您 nín. It is 你 with a heart 心 underneath: “you, whom I hold in my heart”.',w:[['你好','nǐ hǎo','hello (you-good)'],['你们','nǐmen','you (plural)']]},
+{c:'他',p:'tā',m:'he, him',g:1,r:'亻',s:5,k:'Sound + meaning',o:'A person 亻 with 也 yě beside it.',f:'他 (he), 她 (she) and 它 (it) are all pronounced tā. Spoken Chinese has no he/she difference at all. 她 was only invented around 1920, by the poet Liu Bannong, to translate Western books.',w:[['他们','tāmen','they'],['她','tā','she']]},
+// Home & life
+{c:'家',p:'jiā',m:'home, family',g:2,r:'宀',s:10,k:'Compound idea',o:'A roof 宀 over a pig 豕. In ancient villages pigs lived under or beside the house, and a household with a pig was a settled, prosperous home.',f:'国家 guójiā, “country”, is literally “nation-family”: the state imagined as one big household.',w:[['大家','dàjiā','everyone'],['回家','huí jiā','go home']]},
+{c:'安',p:'ān',m:'peace, safe',g:2,r:'宀',s:6,k:'Compound idea',o:'A woman 女 under a roof 宀: someone safe and calm at home.',f:'Tiananmen in Beijing is 天安门, “Gate of Heavenly Peace”. 晚安 wǎn’ān, “evening peace”, is how you say good night.',w:[['安全','ānquán','safe, safety'],['晚安','wǎn’ān','good night']]},
+{c:'门',p:'mén',m:'door, gate',g:2,r:'门',s:3,k:'Pictograph',tr:'門',o:'The traditional 門 shows two swinging door panels, like a saloon door. The simplified form keeps one dot and the frame.',f:'门 gives its sound to 们 men, the plural ending in 我们. Put a mouth in the door and you get 问, to ask.',w:[['门口','ménkǒu','entrance (door-mouth)'],['开门','kāimén','open the door']]},
+{c:'问',p:'wèn',m:'to ask',g:2,r:'门',s:6,k:'Sound + meaning',tr:'問',o:'A mouth 口 at a door 门: someone at your gate asking a question. 门 mén also hints at the sound.',f:'请问 qǐngwèn, “please may I ask”, is the polite way to start any question to a stranger. It works like “excuse me”.',w:[['请问','qǐngwèn','excuse me, may I ask'],['问题','wèntí','question, problem']]},
+{c:'车',p:'chē',m:'vehicle, car',g:2,r:'车',s:4,k:'Pictograph',tr:'車',o:'The traditional 車 is a chariot seen from above: the axle runs top to bottom, the two wheels are flattened into the horizontal lines, and the box is the body.',f:'In Chinese chess (象棋) the 車 piece moves like a rook. Players still call it a chariot.',w:[['汽车','qìchē','car (steam-vehicle)'],['火车','huǒchē','train']]},
+{c:'马',p:'mǎ',m:'horse',g:2,r:'马',s:3,k:'Pictograph',tr:'馬',o:'Traditional 馬 shows the head and mane at the top, and four dots for the legs, standing upright because it was rotated for vertical writing.',f:'马上 mǎshàng, “on horseback”, means “right away”, as fast as a mounted messenger. 马 also lends its sound to 妈 (mother) and 吗 (question word).',w:[['马上','mǎshàng','immediately (on horseback)'],['马马虎虎','mǎmǎhūhū','so-so (horse-horse-tiger-tiger)']]},
+{c:'妈',p:'mā',m:'mother, mom',g:2,r:'女',s:6,k:'Sound + meaning',tr:'媽',o:'Woman 女 tells you the meaning, horse 马 mǎ tells you the sound. Your mum is not a horse.',f:'More than 80% of Chinese characters work this way: one part for meaning, one part for sound. Once you know that, unfamiliar characters stop looking random.',w:[['妈妈','māma','mom'],['爸爸','bàba','dad']]},
+{c:'茶',p:'chá',m:'tea',g:2,r:'艹',s:9,k:'Compound idea',o:'Grass 艹 on top, a person 人 in the middle and a tree 木 below: a person among the plants. Before the Tang dynasty tea was written 荼 tú. Removing one stroke created a new character just for tea.',f:'Every language’s word for tea comes from Chinese. “Chá” travelled overland along the Silk Road (Hindi chai, Russian chay, Portuguese chá). “Te” from the Hokkien dialect travelled by Dutch ships (English tea, Spanish té, French thé).',w:[['喝茶','hē chá','drink tea'],['绿茶','lǜchá','green tea']]},
+{c:'饭',p:'fàn',m:'cooked rice, meal',g:2,r:'饣',s:7,k:'Sound + meaning',tr:'飯',o:'饣 is the food radical, 反 fǎn gives the sound.',f:'吃饭 chīfàn, “eat rice”, simply means “to eat a meal”. Rice and meal are the same idea. The old greeting 你吃饭了吗？, “have you eaten?”, is a way of saying “I care about you”.',w:[['吃饭','chīfàn','to eat (a meal)'],['米饭','mǐfàn','cooked rice']]},
+{c:'吃',p:'chī',m:'to eat',g:2,r:'口',s:6,k:'Sound + meaning',o:'Mouth 口 for meaning, 乞 qǐ for the sound.',f:'Chinese eats more than food. 吃苦 chī kǔ, “eat bitterness”, means to endure hardship. 吃醋 chī cù, “eat vinegar”, means to be jealous.',w:[['好吃','hǎochī','delicious (good to eat)'],['吃醋','chī cù','to be jealous (eat vinegar)']]},
+{c:'喝',p:'hē',m:'to drink',g:2,r:'口',s:12,k:'Sound + meaning',o:'Mouth 口 for meaning, 曷 hé for the sound.',f:'You 喝 tea, water and soup, even thick soup. The verb follows the liquid, not the spoon.',w:[['喝水','hē shuǐ','drink water'],['喝茶','hē chá','drink tea']]},
+{c:'字',p:'zì',m:'character, word',g:2,r:'子',s:6,k:'Compound idea',o:'A child 子 under a roof 宀: raising children at home. The idea of breeding later stretched to characters, which multiply by combining simpler ones.',f:'Chinese characters are 汉字 Hànzì, “Han characters”. The Kangxi Dictionary of 1716 lists about 47,000 of them, but around 3,000 cover 99% of what you read every day.',w:[['汉字','Hànzì','Chinese characters'],['名字','míngzi','name']]},
+{c:'学',p:'xué',m:'to study, learn',g:2,r:'子',s:8,k:'Compound idea',tr:'學',o:'The traditional 學 shows two hands at the top holding 爻, counting sticks or knotted cords, over a roof and a child 子. A child at school learning to count.',f:'学生 xuésheng, “study-born”, is a student. 学习 xuéxí joins “learn” with 习, which once showed a young bird flapping its wings to practise flying.',w:[['学生','xuésheng','student'],['学习','xuéxí','to study']]},
+{c:'福',p:'fú',m:'good fortune, blessing',g:2,r:'礻',s:13,k:'Sound + meaning',o:'礻 is an altar for the spirits. 畐 is a full jar of wine and also gives the sound. A full jar on the altar is a blessing.',f:'At Chinese New Year people hang 福 upside down on their doors. “Fortune is upside down” (福倒了) sounds exactly like “fortune has arrived” (福到了).',w:[['幸福','xìngfú','happiness'],['祝福','zhùfú','blessing, best wishes']]},
+{c:'谢',p:'xiè',m:'to thank',g:2,r:'讠',s:12,k:'Sound + meaning',tr:'謝',o:'讠 is the speech radical, 射 shè (to shoot an arrow) gives the sound.',f:'Close friends and family say 谢谢 less than you might expect. Thanking someone very close can sound formal, as if you were strangers.',w:[['谢谢','xièxie','thank you'],['感谢','gǎnxiè','to be grateful']]},
+// Ideas & feelings
+{c:'好',p:'hǎo',m:'good, well',g:3,r:'女',s:6,k:'Compound idea',o:'A woman 女 next to a child 子. The traditional reading is a mother holding her child, the picture of all that is good.',f:'Pronounced hào, the same character means “to like”: 爱好 àihào is a hobby. One character can have two readings, and context tells you which.',w:[['你好','nǐ hǎo','hello'],['好吃','hǎochī','delicious']]},
+{c:'明',p:'míng',m:'bright, clear',g:3,r:'日',s:8,k:'Compound idea',o:'Sun 日 and moon 月, the two great lights, side by side. Some oracle-bone versions use a window instead of the sun: moonlight shining through a window.',f:'The Ming dynasty 明朝 (1368–1644) built most of the Great Wall you see in photos today. 明天, “bright day”, means tomorrow.',w:[['明天','míngtiān','tomorrow'],['聪明','cōngming','clever']]},
+{c:'休',p:'xiū',m:'to rest',g:3,r:'亻',s:6,k:'Compound idea',o:'A person 亻 leaning against a tree 木: taking a break in the shade.',f:'This is one of the easiest characters to remember, and a good example of how a two-part picture becomes an idea.',w:[['休息','xiūxi','to rest'],['退休','tuìxiū','to retire']]},
+{c:'爱',p:'ài',m:'love',g:3,r:'爫',s:10,k:'Compound idea',tr:'愛',o:'The traditional 愛 has a heart 心 in the centre. The simplified 爱 swapped the heart for 友, friend. Critics joked it was “love without a heart”; defenders said it is love shared between friends.',f:'Many Chinese couples rarely say 我爱你 out loud and show love through actions. Online, 520 (wǔ èr líng) sounds like 我爱你, so 20 May is an unofficial Valentine’s Day.',w:[['我爱你','wǒ ài nǐ','I love you'],['可爱','kě’ài','cute (lovable)']]},
+{c:'朋',p:'péng',m:'friend, companion',g:3,r:'月',s:8,k:'Pictograph',o:'Not two moons. The oldest form shows two strings of cowrie shells, an early money, hanging side by side. A matching pair became a companion.',f:'朋 almost never appears alone. It pairs with 友 to make 朋友, friend.',w:[['朋友','péngyou','friend'],['男朋友','nánpéngyou','boyfriend']]},
+{c:'友',p:'yǒu',m:'friend',g:3,r:'又',s:4,k:'Compound idea',o:'Two right hands, one above the other, reaching out to help each other.',f:'友好 yǒuhǎo, “friend-good”, means friendly. You will see it on signs in tourist areas everywhere.',w:[['朋友','péngyou','friend'],['友好','yǒuhǎo','friendly']]},
+{c:'是',p:'shì',m:'to be; yes, right',g:3,r:'日',s:9,k:'Compound idea',o:'Usually read as sun 日 above 正, upright or correct: what stands straight under the sun is right. Scholars still debate the original picture.',f:'Chinese verbs never change: 我是, 你是, 他们是, always 是. No conjugation, no tenses. Time is shown with words like 昨天 (yesterday) instead.',w:[['不是','bú shì','is not, no'],['是的','shì de','yes, that’s right']]},
+{c:'不',p:'bù',m:'not, no',g:3,r:'一',s:4,k:'Borrowed sound',o:'Oldest forms look like a flower’s base or a root. Its sound was borrowed to write the word “not”.',f:'不 changes its tone: before a 4th-tone word it becomes bú. So 不是 is bú shì and 不要 is bú yào.',w:[['不客气','bú kèqi','you’re welcome'],['不好','bù hǎo','not good']]},
+{c:'吗',p:'ma',m:'question particle',g:3,r:'口',s:6,k:'Sound + meaning',tr:'嗎',o:'Mouth 口 tells you it is a spoken sound, horse 马 mǎ tells you how it sounds.',f:'Add 吗 to the end of any statement and it becomes a yes/no question. 你好 “you’re good” → 你好吗？ “are you good?”. No word order changes needed.',w:[['你好吗？','nǐ hǎo ma?','how are you?'],['是吗？','shì ma?','really?']]},
+// Places & numbers
+{c:'中',p:'zhōng',m:'middle, centre',g:4,r:'丨',s:4,k:'Pictograph',o:'Oracle bones show a pole with streamers driven through the centre of a circle: a banner planted in the middle of a camp to gather people.',f:'China is 中国 Zhōngguó, “the Middle Kingdom” or “Central States”, an ancient name from when China saw itself at the centre of the known world.',w:[['中国','Zhōngguó','China'],['中文','Zhōngwén','Chinese language']]},
+{c:'国',p:'guó',m:'country, nation',g:4,r:'囗',s:8,k:'Compound idea',tr:'國',o:'A border 囗 around 玉, jade, the national treasure. The traditional 國 has 或 inside: a weapon 戈 guarding a piece of land.',f:'Foreign country names were often chosen to sound close and look flattering: 美国 Měiguó (USA) is “beautiful country”, 英国 Yīngguó (UK) is “heroic country”, 德国 Déguó (Germany) is “virtue country”.',w:[['中国','Zhōngguó','China'],['美国','Měiguó','USA (beautiful country)']]},
+{c:'北',p:'běi',m:'north',g:4,r:'匕',s:5,k:'Compound idea',o:'Two people sitting back to back. Rulers sat facing south with their backs to the north, so “back” came to mean north. The original meaning moved to 背, back, which is 北 with flesh 月 underneath.',f:'Chinese lists directions as east, south, west, north (东南西北) and says “northeast” as 东北, east first.',w:[['北京','Běijīng','Beijing (northern capital)'],['东北','dōngběi','northeast']]},
+{c:'京',p:'jīng',m:'capital city',g:4,r:'亠',s:8,k:'Pictograph',o:'A tall building on a raised earth platform. Palaces were built high to look down on the city.',f:'Beijing 北京 is the “northern capital”, Nanjing 南京 the “southern capital”, and Tokyo is written 东京, the “eastern capital”.',w:[['北京','Běijīng','Beijing'],['东京','Dōngjīng','Tokyo (eastern capital)']]},
+{c:'东',p:'dōng',m:'east',g:4,r:'一',s:5,k:'Borrowed sound',tr:'東',o:'The popular explanation of 東 is the sun 日 rising behind a tree 木. Oracle bones actually show a sack tied at both ends, borrowed for its sound. The folk story is still a useful memory trick.',f:'东西 dōngxi, “east-west”, means “thing” or “stuff”. One theory: in the Tang capital Chang’an people went to the East Market and West Market to buy things.',w:[['东西','dōngxi','thing, stuff (east-west)'],['东京','Dōngjīng','Tokyo']]},
+{c:'上',p:'shàng',m:'up, on, above',g:4,r:'一',s:3,k:'Pointing sign',o:'A mark above a baseline. This is a “pointing sign” (指事 zhǐshì): an abstract symbol, not a picture of a thing.',f:'Shanghai 上海 is “on the sea”. 上午, “up-noon”, is morning; 下午, “down-noon”, is afternoon.',w:[['上海','Shànghǎi','Shanghai (on the sea)'],['上午','shàngwǔ','morning']]},
+{c:'下',p:'xià',m:'down, below',g:4,r:'一',s:3,k:'Pointing sign',o:'A mark below a baseline, the mirror of 上.',f:'下雨 “rain comes down” is how you say it’s raining. 下次 “next time” is literally “the time below”, as if time flows downward.',w:[['下午','xiàwǔ','afternoon'],['下次','xià cì','next time']]},
+{c:'一',p:'yī',m:'one',g:4,r:'一',s:1,k:'Pointing sign',o:'A single tally stroke, the simplest character there is.',f:'一 changes tone too: yí before a 4th tone (一个 yí gè), yì before the others (一天 yì tiān). Banks and cheques use the fraud-proof form 壹 so nobody can add strokes.',w:[['一个','yí gè','one (of something)'],['一起','yìqǐ','together']]},
+{c:'二',p:'èr',m:'two',g:4,r:'二',s:2,k:'Pointing sign',o:'Two tally strokes. 三 is three. The pattern stops at four: 四 is a different shape entirely.',f:'Calling someone 二 can be an insult in the north: 很二 means silly. For counting things, use 两 liǎng instead: 两个人, two people.',w:[['二月','èr yuè','February'],['十二','shí’èr','twelve (ten-two)']]},
+{c:'三',p:'sān',m:'three',g:4,r:'一',s:3,k:'Pointing sign',o:'Three tally strokes. Ancient philosophers read them as heaven, humanity and earth.',f:'Chinese numbers are perfectly logical: 十 is ten, 三十 (three-ten) is 30, 三十三 is 33. Children in China learn to count faster partly because of it.',w:[['三十','sānshí','thirty'],['三月','sān yuè','March']]}
+];
+
+/* Single-character glosses for every other character that appears in phrases, dialogues and culture notes */
+const MINI=`本 běn root, origin|韩 hán Korea (Han)|越 yuè to cross, beyond|南 nán south|泰 tài peaceful, great|新 xīn new|加 jiā to add|坡 pō slope|印 yìn print, seal|度 dù degree|蒙 méng to cover; Mongol|古 gǔ ancient|您 nín you (polite)|早 zǎo early, morning|再 zài again|见 jiàn to see|客 kè guest|气 qì air, energy|对 duì correct, facing|起 qǐ to rise|没 méi not have|关 guān to close; relation|系 xì connection|叫 jiào to be called|什 shén what (in 什么)|么 me (ending in 什么)|名 míng name|很 hěn very|高 gāo tall, high|兴 xìng mood, interest|认 rèn to recognise|识 shí to know|哪 nǎ which|要 yào to want|这 zhè this|个 gè (measure word)|多 duō many, much|少 shǎo few, little|钱 qián money|买 mǎi to buy|单 dān bill, single|干 gān dry|杯 bēi cup|辣 là spicy|在 zài to be at|儿 ér child; -r ending|厕 cè toilet|所 suǒ place|左 zuǒ left|右 yòu right|直 zhí straight|走 zǒu to walk|听 tīng to listen|懂 dǒng to understand|请 qǐng please; to invite|说 shuō to speak|遍 biàn time (repetition)|慢 màn slow|点 diǎn a bit; dot|微 wēi tiny|信 xìn letter, trust|吧 ba (suggestion particle)|喜 xǐ joy|欢 huān happy|太 tài too, extremely|了 le (completed action)|油 yóu oil|虎 hǔ tiger|也 yě also|啊 a (softening particle)|碗 wǎn bowl|牛 niú cow, ox|肉 ròu meat|面 miàn noodles; face|给 gěi to give|块 kuài yuan (money); piece|十 shí ten|喂 wèi hey; hello (phone)|怎 zěn how|地 dì ground, earth|铁 tiě iron|站 zhàn station; to stand|然 rán so, thus|后 hòu after, behind|转 zhuǎn to turn|小 xiǎo small|李 lǐ plum; Li (surname)|服 fú to serve; clothes|务 wù affair, task|员 yuán member, worker|看 kàn to look|美 měi beautiful|西 xī west|班 bān class, shift|牙 yá tooth|墨 mò ink|哥 gē older brother|台 tái platform|湾 wān bay|香 xiāng fragrant|港 gǎng harbour|来 lái to come|亚 yà Asia; second|画 huà to draw|蛇 shé snake|添 tiān to add|足 zú foot|弹 tán to pluck (strings)|琴 qín zither, lute|塞 sài frontier|翁 wēng old man|失 shī to lose|守 shǒu to guard|株 zhū tree stump|待 dài to wait|兔 tù rabbit|井 jǐng well|底 dǐ bottom|之 zhī (literary “of”)|蛙 wā frog|八 bā eight|发 fā to prosper; to send|四 sì four|死 sǐ to die|送 sòng to give, send off|钟 zhōng clock; bell|终 zhōng end|红 hóng red|包 bāo packet|春 chūn spring|节 jié festival|秋 qiū autumn|端 duān beginning; to carry|午 wǔ noon|普 pǔ universal|通 tōng common; through|话 huà speech|汉 hàn Han (Chinese)|语 yǔ language|筷 kuài chopsticks|绿 lǜ green|今 jīn now|生 shēng to be born|亮 liàng bright|果 guǒ fruit|头 tou (noun ending)|树 shù tree|阴 yīn shade, dark|伞 sǎn umbrella|种 zhòng to plant|坛 tán altar|脑 nǎo brain|影 yǐng shadow|年 nián year|恐 kǒng fear|出 chū to go out|孩 hái child|朵 duo (part of 耳朵)|机 jī machine|表 biǎo watch; surface|开 kāi to open|努 nǔ to strive|们 men (plural)|的 de ’s, of|回 huí to return|全 quán whole|晚 wǎn evening|题 tí topic|汽 qì steam|爸 bà dad|米 mǐ rice (uncooked)|醋 cù vinegar|习 xí to practise|幸 xìng lucky|祝 zhù to wish|感 gǎn to feel|聪 cōng clever|朝 cháo dynasty|息 xi breath|退 tuì to retreat|可 kě can; -able|文 wén writing, language|英 yīng hero; England|海 hǎi sea|次 cì time (occurrence)|两 liǎng two (of)|月 yuè moon|标 biāo mark|旦 dàn dawn|元 yuán first; yuan|宵 xiāo night|饺 jiǎo dumpling|子 zi (noun ending)|舟 zhōu boat|饼 bǐng cake, flatbread|岁 suì years of age|祖 zǔ ancestor|先 xiān first|拜 bài to pay respects|如 rú as, like|意 yì meaning, wish|事 shì matter|皆 jiē all|有 yǒu to have|和 hé and; harmony|平 píng flat, peace|鸟 niǎo bird|吉 jí lucky|祥 xiáng auspicious|快 kuài fast; happy|乐 lè happy|恭 gōng respectful|喜 xǐ joy|财 cái wealth|脸 liǎn face|氵 shuǐ water radical (three drops)|河 hé river|洗 xǐ to wash|酒 jiǔ alcohol, wine|灬 huǒ fire radical (four dots)|热 rè hot|会 huì can, know how to|品 pǐn goods, quality|晶 jīng crystal, sparkling|雪 xuě snow|雷 léi thunder|雾 wù fog|電 diàn electricity (traditional)|龍 lóng dragon (traditional)|亻 rén person radical|姐 jiě older sister|妹 mèi younger sister|孔 kǒng hole; Kong (Confucius’s surname)|老 lǎo old|桌 zhuō table|聽 tīng to listen (traditional)|扌 shǒu hand radical|打 dǎ to hit|找 zhǎo to look for|拿 ná to hold, take|想 xiǎng to think; to miss|念 niàn to miss; to read aloud|巧 qiǎo clever, skilful|克 kè to overcome; gram|戈 gē dagger-axe (weapon)|假 jiǎ false, borrowed|借 jiè to borrow|尔 ěr you (ancient)|她 tā she|它 tā it|宀 mián roof radical|豕 shǐ pig (ancient)|門 mén door (traditional)|問 wèn to ask (traditional)|車 chē vehicle (traditional)|象 xiàng elephant; image|棋 qí chess, board game|馬 mǎ horse (traditional)|媽 mā mom (traditional)|艹 cǎo grass radical|荼 tú bitter herb (old word for tea)|饣 shí food radical|飯 fàn meal (traditional)|反 fǎn opposite, reverse|乞 qǐ to beg|苦 kǔ bitter|曷 hé why (ancient)|學 xué to study (traditional)|爻 yáo crossed lines; counting sticks|礻 shì altar / spirit radical|畐 fú full jar (ancient)|倒 dào upside down|到 dào to arrive|讠 yán speech radical|謝 xiè to thank (traditional)|射 shè to shoot|爫 zhǎo claw radical|愛 ài love (traditional)|又 yòu again; right hand (ancient)|正 zhèng straight, correct|昨 zuó yesterday|嗎 ma question particle (traditional)|丨 gǔn vertical stroke|囗 wéi enclosure radical|國 guó country (traditional)|玉 yù jade|或 huò or; (ancient) territory|德 dé virtue; Germany|匕 bǐ spoon, dagger|背 bèi back (of body)|亠 tóu lid radical|東 dōng east (traditional)|指 zhǐ finger; to point|壹 yī one (formal, for banks)|呢 ne (and you?) particle|店 diàn shop|边 biān side|馆 guǎn house, hall (tea house, restaurant)|路 lù road|繁 fán complex|体 tǐ body; style|漢 hàn Han (traditional)|粽 zòng rice dumpling|麻 má hemp; numb|骂 mà to scold`;
+
+const PHRASES=[
+{t:'Greetings',d:'The first thirty seconds of any conversation.',l:[
+ ['你好！','Nǐ hǎo!','Hello!','you + good','Both words are 3rd tone. Two 3rd tones in a row turn the first into a 2nd tone, so you actually say ní hǎo.'],
+ ['您好！','Nín hǎo!','Hello! (polite)','you-in-my-heart + good','Use with older people, teachers, shop staff and anyone you want to honour.'],
+ ['早上好！','Zǎoshang hǎo!','Good morning!','early-up + good','Friends often just say 早！ zǎo! “early!”'],
+ ['你吃了吗？','Nǐ chī le ma?','Have you eaten? (a greeting)','you + eat + done + ?','A classic greeting, especially among older people. It is not an invitation. Answer 吃了，你呢？ “I have, and you?”'],
+ ['再见！','Zàijiàn!','Goodbye!','again + see','Exactly like “see you again”.'],
+ ['谢谢！','Xièxie!','Thank you!','thank + thank','The second 谢 is spoken lightly, without tone.'],
+ ['不客气！','Bú kèqi!','You’re welcome!','don’t + be like a guest','Meaning: no need for formality between us, you’re not a guest here.'],
+ ['对不起！','Duìbuqǐ!','Sorry!','face + not + able','At its root: “I can’t face you”, I feel unable to look at you.'],
+ ['没关系！','Méi guānxi!','It’s OK / no problem!','not have + connection','The reply to 对不起: “it has nothing to do with anything”.']]},
+{t:'Introducing yourself',d:'Name, country, and the nice-to-meet-you.',l:[
+ ['我叫{name}。','Wǒ jiào {name}.','My name is {name}.','I + am called + {name}','You can also say 我是{name}, “I am {name}”.'],
+ ['你叫什么名字？','Nǐ jiào shénme míngzi?','What’s your name?','you + called + what + name','Question words stay where the answer goes. No need to move them to the front like in English.'],
+ ['你是哪国人？','Nǐ shì nǎ guó rén?','Where are you from?','you + are + which + country + person','Answer with your country + 人: 美国人, 西班牙人, 墨西哥人.'],
+ ['很高兴认识你！','Hěn gāoxìng rènshi nǐ!','Nice to meet you!','very + happy + know + you',''],
+ ['我会说一点中文。','Wǒ huì shuō yìdiǎn Zhōngwén.','I speak a little Chinese.','I + can + speak + a bit + Chinese','People will be delighted. Expect to hear 你的中文很好！ even when it isn’t yet.']]},
+{t:'Food & drink',d:'Restaurants are where you will practise most.',l:[
+ ['我要这个。','Wǒ yào zhège.','I’d like this one.','I + want + this + (one)','Point at the menu and say this. It works everywhere.'],
+ ['不要辣。','Bú yào là.','Not spicy, please.','don’t + want + spicy','In Sichuan or Hunan, ask for 微辣 wēi là, “tiny spicy”, and expect it to still be hot.'],
+ ['好吃！','Hǎochī!','Delicious!','good + eat','The best compliment for a cook. 好喝 hǎohē is “tasty” for drinks.'],
+ ['干杯！','Gānbēi!','Cheers!','dry + cup','Literally “dry the cup”. At a banquet it means finish your glass.'],
+ ['多少钱？','Duōshao qián?','How much is it?','many-few + money','“Many-few” is how Chinese asks “how much”.'],
+ ['买单！','Mǎidān!','The bill, please!','buy + the bill','Friends often fight to pay. Paying for others shows generosity and builds friendship.']]},
+{t:'Getting around',d:'Directions and the survival phrases for when you’re lost.',l:[
+ ['请问，厕所在哪儿？','Qǐngwèn, cèsuǒ zài nǎr?','Excuse me, where is the toilet?','please-ask, toilet + is at + where','Swap in any place: 地铁站 dìtiě zhàn (metro station), 酒店 jiǔdiàn (hotel).'],
+ ['一直走。','Yìzhí zǒu.','Go straight ahead.','one-straight + walk',''],
+ ['左边 / 右边','Zuǒbian / yòubian','Left side / right side','left-side / right-side',''],
+ ['我听不懂。','Wǒ tīng bu dǒng.','I don’t understand (what I hear).','I + listen + not + understand','The pattern verb + 不 + result means “can’t manage to”. 看不懂 is “can’t understand when reading”.'],
+ ['请再说一遍。','Qǐng zài shuō yí biàn.','Please say it again.','please + again + say + one + time',''],
+ ['慢一点，好吗？','Màn yìdiǎn, hǎo ma?','A bit slower, OK?','slow + a bit, good + ?','Your most useful phrase as a learner.']]},
+{t:'Making friends',d:'The phrases that turn strangers into friends.',l:[
+ ['加个微信吧！','Jiā ge Wēixìn ba!','Let’s add each other on WeChat!','add + one + WeChat + (suggest)','WeChat is how China keeps in touch, pays and makes plans. Swapping WeChat means “let’s be friends”.'],
+ ['你喜欢什么？','Nǐ xǐhuan shénme?','What do you like?','you + like + what',''],
+ ['太好了！','Tài hǎo le!','That’s great!','too + good + (now)',''],
+ ['加油！','Jiāyóu!','You can do it!','add + oil','Like adding fuel to an engine. You will hear it at sports matches, before exams and on hard days.'],
+ ['马马虎虎。','Mǎmǎhūhū.','So-so.','horse horse tiger tiger','Folk tale: a careless painter drew a creature with a tiger’s head and a horse’s body, and called it a “horse-tiger”. Now it means sloppy, or just OK.']]}
+];
+
+const SCEN=[
+{id:'tea',t:'Meeting at a tea house',z:'在茶馆',who:'小李',steps:[
+ {s:{z:'你好！',p:'Nǐ hǎo!',e:'Hello!'},o:[{z:'你好！',p:'Nǐ hǎo!',e:'Hello!',ok:1,n:'Perfect. Mirroring the greeting is exactly what people do.'},{z:'再见！',p:'Zàijiàn!',e:'Goodbye!',ok:0,n:'That means goodbye. You only just sat down.'}]},
+ {s:{z:'你叫什么名字？',p:'Nǐ jiào shénme míngzi?',e:'What’s your name?'},o:[{z:'我叫{name}。',p:'Wǒ jiào {name}.',e:'My name is {name}.',ok:1,n:'Great. 叫 means “to be called”.'},{z:'我是茶。',p:'Wǒ shì chá.',e:'I am tea.',ok:0,n:'You just said “I am tea”. Use 我叫 + your name.'}]},
+ {s:{z:'你是哪国人？',p:'Nǐ shì nǎ guó rén?',e:'Which country are you from?'},o:[{z:'我是美国人。',p:'Wǒ shì Měiguó rén.',e:'I’m American.',ok:1,n:'Country + 人 = a person from that country.'},{z:'我是西班牙人。',p:'Wǒ shì Xībānyá rén.',e:'I’m Spanish.',ok:1,n:'Country + 人 = a person from that country.'},{z:'我是墨西哥人。',p:'Wǒ shì Mòxīgē rén.',e:'I’m Mexican.',ok:1,n:'Country + 人 = a person from that country.'}]},
+ {s:{z:'很高兴认识你！',p:'Hěn gāoxìng rènshi nǐ!',e:'Nice to meet you!'},o:[{z:'我也很高兴认识你！',p:'Wǒ yě hěn gāoxìng rènshi nǐ!',e:'Nice to meet you too!',ok:1,n:'也 yě means “also”. It always goes before the verb.'},{z:'没关系！',p:'Méi guānxi!',e:'No problem!',ok:0,n:'没关系 answers an apology. Try “me too”.'}]},
+ {s:{z:'你喝茶吗？',p:'Nǐ hē chá ma?',e:'Do you drink tea?'},o:[{z:'喝！谢谢！',p:'Hē! Xièxie!',e:'Yes (I drink)! Thanks!',ok:1,n:'Chinese has no single word for “yes”. You answer by repeating the verb: 喝！'},{z:'是！',p:'Shì!',e:'Am!',ok:0,n:'是 means “to be”. To say yes, repeat the verb from the question: 喝！'}]},
+ {s:{z:'加个微信吧！',p:'Jiā ge Wēixìn ba!',e:'Let’s add each other on WeChat!'},o:[{z:'好啊！',p:'Hǎo a!',e:'Sure!',ok:1,n:'You made a friend. 好啊 is a warm, casual yes.'},{z:'不客气！',p:'Bú kèqi!',e:'You’re welcome!',ok:0,n:'不客气 replies to “thank you”. Try a simple “OK!”'}]},
+ {s:{z:'再见！',p:'Zàijiàn!',e:'See you!'},end:1}
+]},
+{id:'noodles',t:'Ordering noodles',z:'在面馆',who:'服务员',steps:[
+ {s:{z:'你好，你要什么？',p:'Nǐ hǎo, nǐ yào shénme?',e:'Hi, what would you like?'},o:[{z:'我要一碗牛肉面。',p:'Wǒ yào yì wǎn niúròu miàn.',e:'I’d like a bowl of beef noodles.',ok:1,n:'碗 wǎn, “bowl”, is the measure word. Chinese always puts one between a number and a noun.'},{z:'我是牛肉面。',p:'Wǒ shì niúròu miàn.',e:'I am beef noodles.',ok:0,n:'You told the waiter you are beef noodles. Use 我要, “I want”.'}]},
+ {s:{z:'要辣吗？',p:'Yào là ma?',e:'Do you want it spicy?'},o:[{z:'不要辣，谢谢。',p:'Bú yào là, xièxie.',e:'Not spicy, thanks.',ok:1,n:'Notice 不 became bú before the 4th tone 要.'},{z:'一点点辣。',p:'Yì diǎndiǎn là.',e:'Just a tiny bit spicy.',ok:1,n:'Doubling 点 makes it even smaller: a tiny little bit.'}]},
+ {s:{z:'喝什么？',p:'Hē shénme?',e:'Anything to drink?'},o:[{z:'一杯茶。',p:'Yì bēi chá.',e:'A cup of tea.',ok:1,n:'杯 bēi, “cup”, is the measure word for drinks.'},{z:'我吃茶。',p:'Wǒ chī chá.',e:'I eat tea.',ok:0,n:'You drink 喝 tea, you don’t eat 吃 it.'}]},
+ {s:{z:'好吃吗？',p:'Hǎochī ma?',e:'Is it good?'},o:[{z:'很好吃！',p:'Hěn hǎochī!',e:'Very tasty!',ok:1,n:'The cook will be happy. 很 “very” is almost always used before adjectives.'},{z:'很好看！',p:'Hěn hǎokàn!',e:'Very good-looking!',ok:0,n:'You told the waiter they look good. 好吃 is “good to eat”, 好看 is “good to look at”.'}]},
+ {ask:'You’ve finished. Ask for the bill.',o:[{z:'买单！',p:'Mǎidān!',e:'The bill, please!',ok:1,n:'Short and natural.'},{z:'多少钱？',p:'Duōshao qián?',e:'How much is it?',ok:1,n:'Also works perfectly.'},{z:'干杯！',p:'Gānbēi!',e:'Cheers!',ok:0,n:'That’s a toast. Try 买单 or 多少钱.'}]},
+ {s:{z:'三十块。',p:'Sānshí kuài.',e:'Thirty yuan.'},o:[{z:'给你。谢谢！',p:'Gěi nǐ. Xièxie!',e:'Here you go. Thanks!',ok:1,n:'给你, “give you”, is how you hand something over.'}]},
+ {s:{z:'谢谢！再见！',p:'Xièxie! Zàijiàn!',e:'Thank you! Bye!'},end:1}
+]},
+{id:'lost',t:'Lost in Beijing',z:'在北京',who:'路人',steps:[
+ {ask:'You need help. Stop a passer-by politely.',o:[{z:'请问……',p:'Qǐngwèn…',e:'Excuse me, may I ask…',ok:1,n:'The perfect opener.'},{z:'喂！',p:'Wèi!',e:'Hey!',ok:0,n:'喂 is “hello” on the phone. Face to face it sounds rude.'}]},
+ {s:{z:'你好，怎么了？',p:'Nǐ hǎo, zěnme le?',e:'Hi, what’s up?'},o:[{z:'地铁站在哪儿？',p:'Dìtiě zhàn zài nǎr?',e:'Where is the metro station?',ok:1,n:'地铁, “ground-iron”, is the metro. 站 is station.'},{z:'我叫地铁。',p:'Wǒ jiào dìtiě.',e:'My name is Metro.',ok:0,n:'You just introduced yourself as “Metro”. Use 在哪儿, “is where?”.'}]},
+ {s:{z:'一直走，然后左转。',p:'Yìzhí zǒu, ránhòu zuǒ zhuǎn.',e:'Go straight, then turn left.'},o:[{z:'请再说一遍，慢一点。',p:'Qǐng zài shuō yí biàn, màn yìdiǎn.',e:'Please say it again, a bit slower.',ok:1,n:'Asking for a repeat is a skill, not a failure.'},{z:'懂了，谢谢！',p:'Dǒng le, xièxie!',e:'Got it, thanks!',ok:1,n:'懂了 means “understood”.'}]},
+ {s:{z:'不客气！加油！',p:'Bú kèqi! Jiāyóu!',e:'You’re welcome! Good luck!'},end:1}
+]}
+];
+
+const COUNTRIES=[
+['中国','Zhōngguó','China','“Middle Kingdom”','Home to 1.4 billion people. Mandarin, officially 普通话 Pǔtōnghuà “common speech”, is based on the Beijing dialect. Cantonese, Shanghainese and Hokkien are spoken languages so different that speakers can’t understand each other, yet they mostly share one written script.','The source: Simplified characters and pinyin.'],
+['台湾','Táiwān','Taiwan','“Terrace bay”','Mandarin here is called 国语 Guóyǔ, “national language”. Taiwan kept Traditional characters (繁体字) and teaches pronunciation with Zhuyin symbols like ㄅㄆㄇㄈ instead of pinyin.','Learn to recognise traditional forms like 國, 門, 學.'],
+['香港','Xiānggǎng','Hong Kong','“Fragrant harbour”','Named after the incense wood once shipped from its harbour. Daily life runs in Cantonese, which has six to nine tones depending on how you count.','Traditional characters, Cantonese sounds, Mandarin widely understood.'],
+['新加坡','Xīnjiāpō','Singapore','Sound of “Singapura”','The name is chosen purely for sound: new-add-slope. Mandarin is one of four official languages, and the government has run a “Speak Mandarin” campaign since 1979.','Simplified characters, Mandarin spoken alongside English, Malay and Tamil.'],
+['马来西亚','Mǎláixīyà','Malaysia','Sound of “Malaysia”','About a quarter of Malaysians have Chinese roots, and many grow up speaking Mandarin, Cantonese, Hokkien and Malay. Notice 马, horse, used only for its sound.','Chinese-medium schools teach in Mandarin.'],
+['日本','Rìběn','Japan','“Origin of the sun”','Japanese borrowed Chinese characters around the 5th century and still uses about 2,000 of them, called kanji (漢字). A Mandarin reader can often guess the meaning of Japanese signs without knowing the language.','Same characters, completely different pronunciation.'],
+['韩国','Hánguó','South Korea','“Country of the Han people”','Korea wrote in Chinese characters (Hanja) for centuries until King Sejong created the Hangul alphabet in 1443 so ordinary people could read. Over half of Korean vocabulary still comes from Chinese roots.','Korean 학생 haksaeng and Mandarin 学生 xuésheng are the same word.'],
+['越南','Yuènán','Vietnam','“Beyond the south”','Vietnamese was written in Chinese characters and the local Chữ Nôm script for about a thousand years before switching to the Latin alphabet in the 20th century. Like Mandarin, it is tonal, with six tones.','Vietnamese học sinh (student) also comes from 学生.'],
+['泰国','Tàiguó','Thailand','“Peaceful, great country”','Thai is tonal too, with five tones. Bangkok’s Chinatown, Yaowarat, is one of the largest in the world, settled mostly by Teochew speakers.','泰 was picked because it sounds like “Thai” and means peaceful.'],
+['蒙古','Měnggǔ','Mongolia','Sound of “Mongol”','In the 13th century Kublai Khan founded the Yuan dynasty and ruled China from Dadu, the city that became Beijing.','Mongolian has its own beautiful vertical script.']
+];
+
+const IDIOMS=[
+['画蛇添足','huà shé tiān zú','draw snake, add feet','To ruin something by overdoing it.','Several servants were given one jug of wine. They agreed that whoever finished drawing a snake first would drink it. The fastest finished, saw the others still drawing, and boasted, “I even have time to add feet!” While he drew feet, another servant finished, grabbed the jug and said: “Snakes don’t have feet.”'],
+['对牛弹琴','duì niú tán qín','play the lute to a cow','To talk to the wrong audience.','The musician Gongming Yi played a refined piece to an ox in a field. The ox kept eating grass. Only when he played sounds like a buzzing mosquito and a lost calf did the ox flick its tail and listen.'],
+['塞翁失马','sài wēng shī mǎ','the old frontier man loses his horse','A misfortune may turn out to be a blessing.','An old man’s horse ran away. Neighbours were sorry; he said, “Who knows if it’s bad?” The horse returned with a wild stallion. His son rode it, fell and broke his leg. Then war came and all healthy young men were taken as soldiers. The son, with his broken leg, was spared.'],
+['守株待兔','shǒu zhū dài tù','guard the stump, wait for rabbits','To wait for luck instead of working.','A farmer saw a rabbit run into a tree stump and die. He took it home for dinner, then stopped ploughing and sat by the stump every day waiting for another rabbit. None came, and his fields went to weeds.'],
+['井底之蛙','jǐng dǐ zhī wā','the frog at the bottom of the well','Someone with a narrow view of the world.','A frog living in a well boasted to a sea turtle that his well was the whole world. The turtle described the endless ocean, and the frog could not imagine it. A good idiom to remember when you start learning about Asia.']
+];
+
+const FACTS=[
+['八','bā','Eight is the luckiest number','八 bā sounds like 发 fā, “to get rich”. The Beijing Olympics opened on 08/08/2008 at 8:08 pm, and phone numbers full of 8s sell for small fortunes.'],
+['四','sì','Four is unlucky','四 sì sounds close to 死 sǐ, “to die”. Many buildings in China skip the 4th, 14th and 24th floors, just as some Western buildings skip 13.'],
+['送钟','sòng zhōng','Never gift a clock','“Giving a clock” 送钟 sounds identical to 送终, “attending someone’s death”. Pick a different present.'],
+['红包','hóngbāo','Red envelopes','At New Year and weddings people give money in red envelopes. Red means luck and joy. Avoid amounts with a 4 in them; 8 is ideal.'],
+['春节','Chūnjié','Spring Festival','Chinese New Year follows the lunar calendar and falls between late January and mid-February. Families travel home in the world’s largest yearly human migration, then eat 饺子 dumplings together.'],
+['中秋节','Zhōngqiūjié','Mid-Autumn Festival','On the 15th day of the 8th lunar month, when the moon is fullest, families eat 月饼 mooncakes and look at the moon together, even when apart.'],
+['端午节','Duānwǔjié','Dragon Boat Festival','Remembers the poet Qu Yuan, who drowned himself in a river in 278 BCE. People raced boats to find him and threw rice into the water, which is why 粽子 rice dumplings are eaten today.'],
+['筷子','kuàizi','Chopstick manners','Never stand chopsticks upright in rice. It looks like the incense sticks burned for the dead at funerals. Lay them across the bowl instead.']
+];
+
+/* ============ HELPERS ============ */
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const store={get(k,d){try{const v=localStorage.getItem('ink.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('ink.'+k,JSON.stringify(v))}catch(e){}}};
+const DICT={};C.forEach((x,i)=>{x.i=i;x.t=toneOf(x.p);DICT[x.c]=x});
+const GL={};MINI.split('|').forEach(row=>{const m=row.trim().match(/^(\S)\s+(\S+)\s+(.*)$/);if(m&&!GL[m[1]])GL[m[1]]={c:m[1],p:m[2],m:m[3],t:toneOf(m[2])}});
+function toneOf(p){
+  if(/[āēīōūǖ]/.test(p))return 1; if(/[áéíóúǘ]/.test(p))return 2;
+  if(/[ǎěǐǒǔǚ]/.test(p))return 3; if(/[àèìòùǜ]/.test(p))return 4; return 5;
+}
+const TONE_NAME={1:'1st tone · high and level',2:'2nd tone · rising',3:'3rd tone · dipping',4:'4th tone · falling',5:'neutral tone · light'};
+const isHan=ch=>/\p{Script=Han}/u.test(ch);
+function info(ch){return DICT[ch]||GL[ch]||null}
+function hz(text){
+  let out='';
+  for(const ch of String(text)){
+    if(isHan(ch)){const d=info(ch);out+=`<button class="hz t${d?d.t:5}" data-c="${ch}" aria-label="${ch}${d?' '+esc(d.p):''}">${ch}</button>`}
+    else out+=esc(ch);
+  }
+  return out;
+}
+const SAY_ICON='<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a8 8 0 0 1 0 11"/></svg>';
+const sayBtn=(t,label)=>`<button class="say" data-say="${esc(t)}" aria-label="${esc(label||'Listen')}">${SAY_ICON}</button>`;
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const strip=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+let userName=store.get('name','Manuel');
+const nm=s=>s.replace(/\{name\}/g,userName);
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.h);toast.h=setTimeout(()=>t.hidden=true,2600)}
+
+/* ============ SPEECH ============ */
+let slow=store.get('slow',true), zhVoice=null, warned=false;
+function pickVoice(){
+  try{const vs=speechSynthesis.getVoices();zhVoice=vs.find(v=>/zh[-_]CN/i.test(v.lang))||vs.find(v=>/^zh/i.test(v.lang))||vs.find(v=>/cmn/i.test(v.lang))||null}catch(e){}
+}
+if('speechSynthesis' in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function speak(text,rate,queue){
+  if(!('speechSynthesis' in window)){toast('This browser can’t play audio. Try Chrome or Safari.');return}
+  try{
+    if(!queue)speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(nm(text).replace(/[A-Za-z]+/g,m=>m===userName?m:''));
+    u.lang='zh-CN'; if(zhVoice)u.voice=zhVoice; u.rate=rate||(slow?0.7:0.95);
+    speechSynthesis.speak(u);
+    if(!zhVoice&&!warned){warned=true;setTimeout(()=>{pickVoice();if(!zhVoice)toast('No Chinese voice found. Add one in your device’s language settings for clearer audio.')},700)}
+  }catch(e){toast('Audio couldn’t play on this device.')}
+}
+function updateSpeed(){const b=$('#speedBtn');b.setAttribute('aria-label','Audio speed: '+(slow?'slow':'normal'));b.title=slow?'Audio: slow (tap for normal)':'Audio: normal (tap for slow)';b.style.borderColor=slow?'var(--accent)':'var(--line)';b.style.color=slow?'var(--accent)':'var(--ink)'}
+$('#speedBtn').addEventListener('click',()=>{slow=!slow;store.set('slow',slow);updateSpeed();toast(slow?'Audio set to slow':'Audio set to normal speed')});
+updateSpeed();
+
+/* ============ STATE ============ */
+let known=new Set(store.get('known',[]));
+const saveKnown=()=>store.set('known',[...known]);
+const todayIdx=()=>{const d=new Date();return (d.getFullYear()*372+d.getMonth()*31+d.getDate())%C.length};
+
+/* ============ VIEWS ============ */
+const app=$('#app');
+const views={learn:renderLearn,chars:renderChars,speak:renderSpeak,asia:renderAsia,practice:renderPractice};
+function route(){
+  const v=(location.hash||'#learn').slice(1);
+  const key=views[v]?v:'learn';
+  document.querySelectorAll('nav.tabs a').forEach(a=>{if(a.dataset.v===key)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();
+  views[key]();
+  window.scrollTo(0,0);
+}
+window.addEventListener('hashchange',route);
+
+function renderLearn(){
+  const d=C[todayIdx()];
+  const pct=Math.round(known.size/C.length*100);
+  app.innerHTML=`<section class="view">
+  <div class="hero">
+    <button class="hero-char grid-bg t${d.t}" data-c="${d.c}" aria-label="Open ${d.c}">${d.c}</button>
+    <div class="hero-copy t${d.t}">
+      <span class="label">Character of the day</span>
+      <h1>${esc(d.m.split(',')[0].replace(/^./,x=>x.toUpperCase()))}</h1>
+      <div style="display:flex;gap:10px;align-items:center"><span class="py hero-pin">${d.p}</span>${sayBtn(d.c,'Listen to '+d.c)}</div>
+      <p class="muted">${esc(d.o.split('. ')[0])}.</p>
+      <div><button class="btn primary" data-c="${d.c}">Explore its story</button></div>
+    </div>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><span class="label">How Chinese works</span><h2>Three ideas that make it click</h2></div>
+    <div class="ideas">
+      <div class="idea"><span class="big">${hz('山 木 好')}</span><h3>Characters carry meaning, not letters</h3><p>Some are pictures (山 mountain), some combine pictures into ideas (woman + child = 好 good), and most pair a meaning part with a sound part. Tap any character in the app to see how it was built.</p></div>
+      <div class="idea"><span class="big py" style="font-family:var(--py)">pīnyīn</span><h3>Pinyin is the bridge</h3><p>Since 1958, pinyin has spelled Mandarin sounds with the Latin alphabet. It is how you read pronunciation and how people type Chinese on their phones.</p></div>
+      <div class="idea"><span class="big">${hz('妈 麻 马 骂')}</span><h3>Tones change the word</h3><p>mā, má, mǎ, mà: mother, hemp, horse, scold. The pitch of your voice is part of the word. In this app every character is underlined in its tone colour.</p></div>
+    </div>
+    <div class="legend"><span class="t1">1st · high</span><span class="t2">2nd · rising</span><span class="t3">3rd · dipping</span><span class="t4">4th · falling</span><span class="t5">neutral</span></div>
+  </div>
+
+  <div class="block">
+    <div class="block-head"><span class="label">Your path</span><h2>Start here, in this order</h2></div>
+    <ol class="path">
+      <li><a href="#speak" data-jump="tones"><div><b>Hear the four tones</b><br><span class="muted">Train your ear before anything else</span></div><span class="arrow">→</span></a></li>
+      <li><a href="#chars"><div><b>Meet your first characters</b><br><span class="muted">${C.length} characters with their origin stories</span></div><span class="arrow">→</span></a></li>
+      <li><a href="#speak" data-jump="phrases"><div><b>Learn survival phrases</b><br><span class="muted">Greetings, food, directions, friends</span></div><span class="arrow">→</span></a></li>
+      <li><a href="#speak" data-jump="talk"><div><b>Hold a conversation</b><br><span class="muted">Role-play a tea house, a noodle shop, a lost tourist</span></div><span class="arrow">→</span></a></li>
+      <li><a href="#practice"><div><b>Practise a little every day</b><br><span class="muted">Flashcards, meaning quiz, tone quiz</span></div><span class="arrow">→</span></a></li>
+    </ol>
+  </div>
+
+  <div class="block">
+    <div class="stat-row"><span><b>${known.size}</b> <span class="muted">of ${C.length} characters known</span></span><span class="muted">${pct}%</span></div>
+    <div class="bar" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div>
+  </div>
+  </section>`;
+}
+
+let charFilter='all', charQuery='';
+function renderChars(){
+  app.innerHTML=`<section class="view"><div class="block">
+    <div class="block-head"><span class="label">字 zì · characters</span><h2>Tap a character to see where it came from</h2></div>
+    <div class="tools"><input class="search" id="q" type="search" placeholder="Search: water, shui, 水…" value="${esc(charQuery)}" aria-label="Search characters"></div>
+    <div class="chips" id="chips">${['all',...GROUPS.map((_,i)=>i),'known'].map(g=>`<button class="chip" data-g="${g}" aria-pressed="${String(charFilter)===String(g)}">${g==='all'?'All':g==='known'?'Known':GROUPS[g]}</button>`).join('')}</div>
+    <div class="legend"><span class="t1">1st</span><span class="t2">2nd</span><span class="t3">3rd</span><span class="t4">4th</span><span class="t5">neutral</span></div>
+    <div class="cgrid" id="cgrid"></div>
+  </div></section>`;
+  const draw=()=>{
+    const q=strip(charQuery.trim());
+    const list=C.filter(x=>(charFilter==='all'||(charFilter==='known'?known.has(x.c):x.g==charFilter))&&(!q||x.c===q||strip(x.p).replace(/\s/g,'').includes(q.replace(/\s/g,''))||x.m.toLowerCase().includes(q)));
+    $('#cgrid').innerHTML=list.length?list.map(x=>`<button class="tile t${x.t}${known.has(x.c)?' known':''}" data-c="${x.c}"><span class="c">${x.c}</span><span class="p">${x.p}</span><span class="m">${esc(x.m.split(',')[0])}</span></button>`).join(''):`<p class="muted">${charFilter==='known'?'No known characters yet. Mark them in a character’s page or in Practice.':'Nothing matches. Try English (“fire”) or pinyin without tones (“huo”).'}</p>`;
+  };
+  draw();
+  $('#q').addEventListener('input',e=>{charQuery=e.target.value;draw()});
+  $('#chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;charFilter=b.dataset.g;document.querySelectorAll('#chips .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));draw()});
+}
+
+const CONTOUR={1:[[10,8],[90,8]],2:[[10,32],[90,8]],3:[[10,38],[45,52],[90,14]],4:[[10,8],[90,52]]};
+const CHAO={1:'55',2:'35',3:'214',4:'51'};
+function contour(t){
+  const pts=CONTOUR[t].map(p=>p.join(',')).join(' ');
+  const lines=[8,19,30,41,52].map(y=>`<line x1="4" x2="96" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1"/>`).join('');
+  return `<svg viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true">${lines}<polyline points="${pts}" fill="none" stroke="var(--tc)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>`;
+}
+let scen=null;
+function renderSpeak(){
+  const T=[[1,'妈','mā','mother','High and steady, like holding a note.'],[2,'麻','má','hemp, numb','Rising, like asking “what?”'],[3,'马','mǎ','horse','Dips low then rises. In fast speech often just low.'],[4,'骂','mà','to scold','Sharp fall, like a firm “No!”']];
+  app.innerHTML=`<section class="view">
+  <div class="block" id="tones">
+    <div class="block-head"><span class="label">声调 shēngdiào · tones</span><h2>Four tones, one syllable</h2><p class="muted">Tap each card to hear it. The lines show pitch on the five-level scale linguists use for Chinese (5 is your highest note, 1 your lowest).</p></div>
+    <div class="tones">${T.map(([t,c,p,m,d])=>`<button class="tone t${t}" data-say="${c}"><span class="label">Tone ${t} · ${CHAO[t]}</span>${contour(t)}<span class="c">${c}</span><span class="py p">${p}</span><small><b>${m}</b> · ${d}</small></button>`).join('')}</div>
+    <div class="s-sec"><h3>Three tone changes you’ll hear everywhere</h3>
+    <ol class="rules">
+      <li><b>3 + 3 → 2 + 3.</b> Two dipping tones in a row are hard to say, so the first one rises: ${hz('你好')} nǐ hǎo is spoken <span class="py">ní hǎo</span>.</li>
+      <li><b>不 before a 4th tone becomes bú:</b> ${hz('不是')} <span class="py">bú shì</span>, ${hz('不要')} <span class="py">bú yào</span>.</li>
+      <li><b>一 changes too:</b> <span class="py">yí</span> before a 4th tone (${hz('一个')} yí gè), <span class="py">yì</span> before the others (${hz('一天')} yì tiān).</li>
+    </ol></div>
+  </div>
+
+  <div class="block" id="phrases">
+    <div class="block-head"><span class="label">说 shuō · phrases</span><h2>What to say, and what it really means</h2><p class="muted">Each phrase comes with its word-for-word meaning, which often tells you how Chinese speakers see the world. Tap any character to study it.</p></div>
+    <div class="name-field"><label for="nameIn">Your name in examples:</label><input id="nameIn" value="${esc(userName)}" maxlength="20"></div>
+    <div class="chips" id="pcats">${PHRASES.map((c,i)=>`<button class="chip" data-i="${i}" aria-pressed="${i===0}">${c.t}</button>`).join('')}</div>
+    <div class="cat-list" id="plist"></div>
+  </div>
+
+  <div class="block" id="talk">
+    <div class="block-head"><span class="label">对话 duìhuà · conversation</span><h2>Practise a real conversation</h2><p class="muted">Pick a situation. Listen to each line, then choose what you’d say back. Wrong answers explain what you actually said.</p></div>
+    <div class="scen" id="scen">${SCEN.map(s=>`<button class="btn" data-s="${s.id}"><span style="font-family:var(--hz)">${s.z}</span> ${s.t}</button>`).join('')}</div>
+    <div class="chat" id="chat" aria-live="polite"><p class="muted">Choose a situation above to start.</p></div>
+  </div>
+  </section>`;
+  const drawCat=i=>{const c=PHRASES[i];$('#plist').innerHTML=`<p class="muted">${c.d}</p>`+c.l.map(([z,p,e,lit,note])=>`<div class="phrase"><div class="z">${hz(nm(z))}</div>${sayBtn(z)}<div class="py p">${esc(nm(p))}</div><div class="e">${esc(nm(e))}</div><div class="lit">Word for word: <b>${esc(nm(lit))}</b></div>${note?`<div class="note">${esc(nm(note))}</div>`:''}</div>`).join('')};
+  let cat=0;drawCat(0);
+  $('#pcats').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;cat=+b.dataset.i;document.querySelectorAll('#pcats .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));drawCat(cat)});
+  $('#nameIn').addEventListener('change',e=>{userName=e.target.value.trim()||'Manuel';store.set('name',userName);drawCat(cat)});
+  $('#scen').addEventListener('click',e=>{const b=e.target.closest('[data-s]');if(!b)return;startScen(b.dataset.s)});
+  if(pendingJump){const el=document.getElementById(pendingJump);pendingJump=null;if(el)setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),50)}
+}
+function startScen(id){
+  const s=SCEN.find(x=>x.id===id);scen={s,step:0,log:[],fb:null};drawChat();
+  const st=s.steps[0];if(st.s)speak(st.s.z);
+}
+function bubble(who,l,me){return `<div class="msg${me?' me':''}"><span class="who">${esc(who)}</span><div class="row"><span class="z">${hz(nm(l.z))}</span>${sayBtn(l.z)}</div><span class="py">${esc(nm(l.p))}</span><span style="font-size:.9rem;opacity:.85">${esc(nm(l.e))}</span></div>`}
+function drawChat(){
+  const {s,step,log,fb}=scen;const st=s.steps[step];
+  let h=log.join('');
+  if(st){
+    if(st.s&&!st.shown){h+=bubble(s.who,st.s,false)}
+    if(fb)h+=`<div class="fb${fb.ok?'':' bad'}">${esc(nm(fb.n))}</div>`;
+    if(st.end){h+=`<div class="fb">Conversation complete. 太好了！ Try another situation, or replay this one.</div><div><button class="btn" data-s="${s.id}" id="again">Replay</button></div>`}
+    else{
+      if(st.ask)h+=`<p class="ask">${esc(st.ask)}</p>`;
+      h+=`<div class="opts">${shuffle(st.o.map((o,i)=>({o,i}))).map(({o,i})=>`<button class="opt" data-o="${i}"><span class="z">${esc(nm(o.z))}</span><span class="py muted">${esc(nm(o.p))}</span><span style="font-size:.9rem">${esc(nm(o.e))}</span></button>`).join('')}</div>`;
+    }
+  }
+  const chat=$('#chat');chat.innerHTML=h;
+  chat.querySelectorAll('.opt').forEach(b=>b.addEventListener('click',()=>choose(+b.dataset.o)));
+  const ag=$('#again');if(ag)ag.addEventListener('click',()=>startScen(s.id));
+  const last=chat.lastElementChild;if(last&&scen.step>0)last.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function choose(i){
+  const {s}=scen;const st=s.steps[scen.step];const o=st.o[i];
+  if(!o.ok){scen.fb={ok:0,n:o.n};drawChat();return}
+  if(st.s)scen.log.push(bubble(s.who,st.s,false));
+  scen.log.push(bubble('You',o,true));
+  scen.log.push(`<div class="fb">${esc(nm(o.n))}</div>`);
+  scen.fb=null;scen.step++;
+  speak(o.z);
+  const nx=s.steps[scen.step];
+  drawChat();
+  if(nx&&nx.s)speak(nx.s.z,undefined,true);
+}
+
+function renderAsia(){
+  app.innerHTML=`<section class="view">
+  <div class="block">
+    <div class="block-head"><span class="label">亚洲 Yàzhōu · Asia</span><h2>Asia through Chinese characters</h2><p class="muted">Characters travelled across East and Southeast Asia for two thousand years. Every country name below is tappable: some are translations, some are pure sound.</p></div>
+    <div class="countries">${COUNTRIES.map(([z,p,en,lit,txt,link])=>`<article class="country"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><span class="z">${hz(z)}</span>${sayBtn(z,'Listen to '+en)}</div><div><span class="py" style="color:var(--accent)">${p}</span> · <b>${en}</b></div><div class="lit">${esc(lit)}</div><p>${esc(txt)}</p><div class="link">${esc(link)}</div></article>`).join('')}</div>
+  </div>
+  <div class="block">
+    <div class="block-head"><span class="label">成语 chéngyǔ · idioms</span><h2>Four characters, a whole story</h2><p class="muted">Chengyu are four-character sayings, many over 2,000 years old. Chinese speakers use them like proverbs. Each one hides a story.</p></div>
+    <div class="idioms">${IDIOMS.map(([z,p,lit,mean,story])=>`<article class="idiom"><span class="z">${hz(z)}</span><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="py" style="color:var(--accent);font-size:1.1rem">${p}</span>${sayBtn(z)}</div><div class="lit">“${esc(lit)}”</div><div class="mean">${esc(mean)}</div><p>${esc(story)}</p></article>`).join('')}</div>
+  </div>
+  <div class="block">
+    <div class="block-head"><span class="label">文化 wénhuà · culture</span><h2>Things every visitor should know</h2></div>
+    <div class="facts">${FACTS.map(([z,p,h,txt])=>`<article class="fact"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span class="z">${hz(z)}</span>${sayBtn(z)}</div><span class="py muted">${p}</span><h3>${esc(h)}</h3><p>${esc(txt)}</p></article>`).join('')}</div>
+  </div>
+  </section>`;
+}
+
+let pmode='flash', deck=[], dpos=0, shown=false, quiz=null;
+function renderPractice(){
+  app.innerHTML=`<section class="view"><div class="block">
+    <div class="block-head"><span class="label">练习 liànxí · practice</span><h2>A few minutes a day</h2></div>
+    <div class="modes chips" id="modes">${[['flash','Flashcards'],['meaning','Meaning quiz'],['tone','Tone quiz']].map(([k,l])=>`<button class="chip" data-m="${k}" aria-pressed="${pmode===k}">${l}</button>`).join('')}</div>
+    <div id="pstage"></div>
+  </div></section>`;
+  $('#modes').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;pmode=b.dataset.m;document.querySelectorAll('#modes .chip').forEach(c=>c.setAttribute('aria-pressed',c===b));startMode()});
+  startMode();
+}
+function startMode(){
+  if(pmode==='flash'){const unk=C.filter(x=>!known.has(x.c));deck=shuffle(unk.length?unk:C);dpos=0;shown=false;drawFlash()}
+  else{quiz={n:0,score:0,total:10,q:null,answered:false};nextQ()}
+}
+function drawFlash(){
+  const st=$('#pstage');
+  if(dpos>=deck.length){st.innerHTML=`<div class="card-stage"><h3>Deck finished</h3><p class="muted">You know ${known.size} of ${C.length} characters.</p><div class="row-btns"><button class="btn primary" id="restart">Shuffle again</button>${known.size?'<button class="btn" id="reset">Forget all progress</button>':''}</div></div>`;
+    $('#restart').onclick=()=>startMode();const r=$('#reset');if(r)r.onclick=()=>{r.outerHTML='<span class="row-btns"><span class="muted">Really reset?</span><button class="btn small" id="yes">Yes, reset</button></span>';$('#yes').onclick=()=>{known.clear();saveKnown();startMode()}};return}
+  const x=deck[dpos];
+  st.innerHTML=`<div class="card-stage">
+    <span class="score">${dpos+1} / ${deck.length} · ${known.size} known</span>
+    <div class="flash grid-bg">${x.c}</div>
+    <div class="reveal t${x.t}">${shown?`<span class="py p">${x.p}</span><b>${esc(x.m)}</b><button class="btn small" data-c="${x.c}">See its story</button>`:'<span class="muted">Do you remember the sound and meaning?</span>'}</div>
+    <div class="row-btns">${shown?`${sayBtn(x.c)}<button class="btn" id="again">Again later</button><button class="btn primary" id="know">I know it</button>`:`<button class="btn primary" id="show">Show answer</button>`}</div>
+  </div>`;
+  if(!shown)$('#show').onclick=()=>{shown=true;drawFlash();speak(x.c)};
+  else{$('#again').onclick=()=>{deck.push(x);dpos++;shown=false;drawFlash()};$('#know').onclick=()=>{known.add(x.c);saveKnown();dpos++;shown=false;drawFlash()}}
+}
+function nextQ(){
+  const st=$('#pstage');
+  if(quiz.n>=quiz.total){st.innerHTML=`<div class="card-stage"><h3>${quiz.score} / ${quiz.total}</h3><p class="muted">${quiz.score>=8?'太好了！ Excellent.':quiz.score>=5?'加油！ Good progress.':'Keep going. Every round trains your ear and eye.'}</p><button class="btn primary" id="restart">Play again</button></div>`;$('#restart').onclick=()=>startMode();return}
+  quiz.answered=false;
+  if(pmode==='meaning'){
+    const x=C[Math.random()*C.length|0];
+    const others=shuffle(C.filter(y=>y.c!==x.c&&y.m.split(',')[0]!==x.m.split(',')[0])).slice(0,3);
+    const opts=shuffle([x,...others]);
+    quiz.q={x,opts};
+    st.innerHTML=`<div class="card-stage"><span class="score">Question ${quiz.n+1} of ${quiz.total} · score ${quiz.score}</span><div class="flash grid-bg">${x.c}</div><p class="muted">What does it mean?</p><div class="qopts">${opts.map(o=>`<button class="qopt" data-a="${o.c}">${esc(o.m.split(',')[0])}</button>`).join('')}</div><div id="qfb" class="reveal"></div></div>`;
+  }else{
+    const pool=C.filter(y=>y.t<5);const x=pool[Math.random()*pool.length|0];
+    quiz.q={x};
+    st.innerHTML=`<div class="card-stage"><span class="score">Question ${quiz.n+1} of ${quiz.total} · score ${quiz.score}</span><button class="btn primary" id="play">${SAY_ICON.replace('<svg','<svg style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2"')} Play the sound</button><p class="muted">Which tone did you hear?</p><div class="qopts">${[1,2,3,4].map(t=>`<button class="qopt t${t}" data-tone="${t}" data-a="${t}">${contour(t).replace('<svg','<svg style="width:100%;height:34px"')}Tone ${t}</button>`).join('')}</div><div id="qfb" class="reveal"></div></div>`;
+    $('#play').onclick=()=>speak(x.c);setTimeout(()=>speak(x.c),250);
+  }
+  st.querySelectorAll('.qopt').forEach(b=>b.addEventListener('click',()=>answer(b)));
+}
+function answer(b){
+  if(quiz.answered)return;quiz.answered=true;
+  const x=quiz.q.x;const right=pmode==='meaning'?x.c:String(x.t);
+  const ok=b.dataset.a===right;if(ok)quiz.score++;
+  document.querySelectorAll('.qopt').forEach(o=>{if(o.dataset.a===right)o.classList.add('right');else if(o===b)o.classList.add('wrong')});
+  $('#qfb').className='reveal t'+x.t;
+  $('#qfb').innerHTML=`<b style="color:var(${ok?'--good':'--bad'})">${ok?'Correct':'Not quite'}</b><span><span style="font-family:var(--hz);font-size:1.6rem">${x.c}</span> <span class="py p" style="font-size:1.2rem">${x.p}</span> · ${esc(x.m)}</span><button class="btn small" id="nextq">Next</button>`;
+  if(pmode==='meaning')speak(x.c);
+  quiz.n++;$('#nextq').onclick=nextQ;
+}
+
+/* ============ CHARACTER SHEET ============ */
+const sheet=$('#sheet'), sb=$('#sheetBody');
+let lastFocus=null, curChar=null;
+function openChar(ch){
+  lastFocus=lastFocus||document.activeElement;curChar=ch;
+  const x=DICT[ch], g=GL[ch];
+  const close=`<button class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>`;
+  if(x){
+    const prev=C[(x.i-1+C.length)%C.length].c, next=C[(x.i+1)%C.length].c;
+    sb.innerHTML=`<div class="sheet-bar"><span class="label grow">${GROUPS[x.g]} · ${x.i+1} of ${C.length}</span><button class="icon-btn" data-c="${prev}" aria-label="Previous character"><svg viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button><button class="icon-btn" data-c="${next}" aria-label="Next character"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>${close}</div>
+    <div class="s-head t${x.t}"><div class="s-char grid-bg">${x.c}</div><div class="s-meta"><span class="py p">${x.p}</span><span class="muted" style="font-size:.9rem">${TONE_NAME[x.t]}</span><span class="m">${esc(x.m)}</span><div class="row-btns" style="justify-content:flex-start"><button class="btn small" data-say="${x.c}" data-rate="0.6">${SAY_ICON.replace('<svg','<svg style="width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2"')} Slow</button><button class="btn small" data-say="${x.c}" data-rate="1">Normal</button></div></div></div>
+    <div class="kv"><span>Radical <b>${x.r}</b></span><span>${x.s} stroke${x.s>1?'s':''}</span><span>${x.k}</span>${x.tr?`<span>Traditional <b>${x.tr}</b></span>`:''}</div>
+    <div class="s-sec"><span class="label">Origin</span><p>${hzInline(x.o)}</p></div>
+    <div class="s-sec"><span class="label">Did you know</span><p>${hzInline(x.f)}</p></div>
+    <div class="s-sec"><span class="label">Words with ${x.c}</span><div class="words">${x.w.map(([z,p,e])=>`<div class="word"><span class="z">${hz(z)}</span>${sayBtn(z)}<span><span class="py" style="color:var(--accent)">${p}</span> · ${esc(e)}</span></div>`).join('')}</div></div>
+    <div class="s-sec"><span class="label">Trace it</span><div class="trace"><canvas id="pad" width="440" height="440" aria-label="Drawing pad for tracing ${x.c}"></canvas><div class="side"><p class="muted" style="font-size:.93rem">Trace over the grey shape with your finger or mouse. The dashed 米字格 grid is the same practice grid Chinese schoolchildren use. Strokes generally go top to bottom, left to right.</p><div class="row-btns" style="justify-content:flex-start"><button class="btn small" id="clearPad">Clear</button><a class="btn small" href="https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=0&wdqb=${encodeURIComponent(x.c)}" target="_blank" rel="noopener">Stroke order ↗</a></div></div></div></div>
+    <div><button class="btn${known.has(x.c)?'':' primary'}" id="knowBtn">${known.has(x.c)?'✓ Marked as known · undo':'I know this character'}</button></div>`;
+    $('#knowBtn').onclick=()=>{known.has(x.c)?known.delete(x.c):known.add(x.c);saveKnown();openChar(x.c);refreshTiles()};
+    setupPad(x.c);
+  }else{
+    const t=g?g.t:5;
+    sb.innerHTML=`<div class="sheet-bar"><span class="label grow">Character</span>${close}</div>
+    <div class="s-head t${t}"><div class="s-char grid-bg">${ch}</div><div class="s-meta">${g?`<span class="py p">${g.p}</span><span class="muted" style="font-size:.9rem">${TONE_NAME[t]}</span><span class="m">${esc(g.m)}</span>`:'<span class="m">Not in the deck yet</span>'}<div class="row-btns" style="justify-content:flex-start">${sayBtn(ch,'Listen')}</div></div></div>
+    <p class="muted">This character appears in phrases. Its full origin story isn’t in your deck of ${C.length} yet. Look it up in a dictionary for more.</p>
+    <div class="s-sec"><span class="label">Trace it</span><div class="trace"><canvas id="pad" width="440" height="440" aria-label="Drawing pad"></canvas><div class="side"><div class="row-btns" style="justify-content:flex-start"><button class="btn small" id="clearPad">Clear</button><a class="btn small" href="https://www.mdbg.net/chinese/dictionary?page=worddict&wdrst=0&wdqb=${encodeURIComponent(ch)}" target="_blank" rel="noopener">Dictionary ↗</a></div></div></div></div>`;
+    setupPad(ch);
+  }
+  if(sheet.hidden){sheet.hidden=false;document.body.style.overflow='hidden'}
+  sb.scrollTop=0;
+  const f=sb.querySelector('[data-close]');f&&f.focus({preventScroll:true});
+}
+function hzInline(text){
+  // make every Han character in prose tappable but keep it quieter
+  return text.split(/(\p{Script=Han}+)/u).map((part,i)=>i%2?`<span>${hz(part)}</span>`:esc(part)).join('');
+}
+function closeSheet(){sheet.hidden=true;document.body.style.overflow='';speechSynthesis&&speechSynthesis.cancel&&speechSynthesis.cancel();if(lastFocus&&lastFocus.focus)lastFocus.focus({preventScroll:true});lastFocus=null}
+function refreshTiles(){if((location.hash||'#learn')==='#chars'){const y=window.scrollY;renderChars();window.scrollTo(0,y)}}
+function setupPad(ch){
+  const cv=$('#pad');if(!cv)return;const ctx=cv.getContext('2d');const W=cv.width;
+  const css=getComputedStyle(document.documentElement);
+  const col=n=>css.getPropertyValue(n).trim();
+  function guide(){
+    ctx.clearRect(0,0,W,W);
+    ctx.strokeStyle=col('--line');ctx.lineWidth=2;ctx.setLineDash([10,10]);
+    ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,W);ctx.moveTo(0,W/2);ctx.lineTo(W,W/2);ctx.moveTo(0,0);ctx.lineTo(W,W);ctx.moveTo(W,0);ctx.lineTo(0,W);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=col('--sunk');ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font=`400 ${W*0.78}px "Noto Serif SC", serif`;ctx.fillText(ch,W/2,W/2+W*0.03);
+  }
+  guide();
+  if(document.fonts&&document.fonts.load)document.fonts.load(`400 100px "Noto Serif SC"`,ch).then(guide).catch(()=>{});
+  let drawing=false;
+  const pos=e=>{const r=cv.getBoundingClientRect();return[(e.clientX-r.left)*W/r.width,(e.clientY-r.top)*W/r.height]};
+  cv.onpointerdown=e=>{drawing=true;cv.setPointerCapture(e.pointerId);const[x,y]=pos(e);ctx.strokeStyle=col('--ink');ctx.lineWidth=W*0.045;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+.1,y+.1);ctx.stroke()};
+  cv.onpointermove=e=>{if(!drawing)return;const[x,y]=pos(e);ctx.lineTo(x,y);ctx.stroke()};
+  cv.onpointerup=cv.onpointercancel=()=>drawing=false;
+  $('#clearPad').onclick=guide;
+}
+
+/* ============ GLOBAL EVENTS ============ */
+let pendingJump=null;
+document.addEventListener('click',e=>{
+  const say=e.target.closest('[data-say]');
+  if(say){e.preventDefault();e.stopPropagation();speak(say.dataset.say,say.dataset.rate?+say.dataset.rate:undefined);return}
+  const c=e.target.closest('[data-c]');
+  if(c){e.preventDefault();openChar(c.dataset.c);if(DICT[c.dataset.c]||GL[c.dataset.c])speak(c.dataset.c);return}
+  if(e.target.closest('[data-close]')){closeSheet();return}
+  const j=e.target.closest('[data-jump]');
+  if(j){pendingJump=j.dataset.jump;if(location.hash==='#speak'){e.preventDefault();route()}}
+});
+document.addEventListener('keydown',e=>{
+  if(sheet.hidden)return;
+  if(e.key==='Escape')closeSheet();
+  const x=DICT[curChar];
+  if(x&&e.key==='ArrowRight')openChar(C[(x.i+1)%C.length].c);
+  if(x&&e.key==='ArrowLeft')openChar(C[(x.i-1+C.length)%C.length].c);
+});
+route();
+</script>
+
+</body>
+</html>
